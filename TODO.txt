@@ -1,0 +1,85 @@
+* Create script for synthetic image generation from segmentation result
+* Clean up Matlab interface (use dynamic_cast<>,  provided as helper function in kvlMatlabRunnerArray.cxx
+* Write a proper interpolator of any floating-point scalar vector defined at the mesh nodes - can be 
+used in kvlWarpMesh.m (to compute a dense deformation field) and to color-code priors (by interpolating colors assigned a priori at the mesh nodes instead of class probabilities which are then color-coded afterwards)
+
+
+
+--
+
+The whole mesh upsampling is a mess right now. Ideally we'd have a compile option to use the "tetgen" library or not; if not then a simple regular mesh upsampling (such as the one used in kvlAtlasMeshCollection->Construc() and kvlAtlasMeshCollection->Upsample()) is used. 
+
+Right now things are a mess: 
+
+  1. kvlAtlasMeshBuilder uses kvlMultiResolutionAtlasMesher to do the interleaved mesh parameter estimation (with kvlAtlasParameterEstimator) vs. upsampling steps, whereas kvlAtlasParameterEstimationConsole implements the same directly (using kvlAtlasMeshCollection functionality to do regular mesh upsampling)
+
+  2. kvlMultiResolutionAtlasMesher replicates a lot of code from kvlAtlasMeshCollection->Construct()/Upsample() [BAD]
+  
+Ideally we'd like to clean this up by:
+  
+  * folding the complicated Construct()/Upsample() stuff directly into kvlAtlasMeshCollection, even for non-uniform meshes
+  
+  * make the being-sparse-while-upsampling not an option but an automatic thing when compiling with tetgen, which is a CMake option
+  
+  * this would make kvlMultiResolutionAtlasMesher a very trivial class. Either we remove it completely (simple but bad: we'd be reimplementing the same loop in kvlAtlasMeshBuilder and kvlAtlasParameterEstimationConsole), or we also use it in kvlAtlasParameterEstimationConsole (cleaner but will require some more thinking/programming because of event handling tied to the kvlAtlasParameterEstimator it uses internally)
+
+For now I've just made kvlMultiResolutionAtlasMesher using tetgen (sparse) or not (regular non-sparse mesh) a compile option. kvlAtlasParameterEstimationConsole still doesn't use the same class, mainly because it allows for an explicit mesh collection which explicitly uses kvlAtlasParameterEstimator with correct event/observers etc
+
+
+  
+
+Below is an overview of the functionaly as currently implemented:
+
+* kvlAtlasParameterEstimationConsole:
+    
+   meshCollection->Construct( meshSize, domainSize, initialStiffness, 
+                              numberOfClasses, numberOfMeshes );
+                                
+   for ( int upsamplingStepNumber = 0; upsamplingStepNumber <= numberOfUpsamplingSteps; upsamplingStepNumber++ )
+      {
+      m_Estimator->Estimate();
+      
+      meshCollection->GetUpsampled();
+      }
+      
+      
+      
+* kvlAtlasMeshBuilder:
+
+  kvlMultiResolutionAtlasMesher->SetUp( m_LabelImages, m_CompressionLookupTable, m_InitialSize, m_InitialStiffnesses, true );
+
+  kvlMultiResolutionAtlasMesher->Go();
+  kvlMultiResolutionAtlasMesher->GetCurrentMeshCollection();
+  
+  
+  
+* kvlMultiResolutionAtlasMesher:
+
+  - Manually builds up tetrahedra
+  
+  - Has member function
+  
+      this->Upsample()
+      
+    which subdivides the list of cubes it maintains internally (m_Hexahedra) based on 
+    some uniformity condition (if m_TryToBeSparse flag is set)
+  
+  - Has member function 
+
+      this->GetMeshCollection( referencePosition, positions, stiffness )
+    
+    which calls another member function
+  
+      cells = this->GetCells( cellGeneratingPosition )
+    
+    which calls tetgen, then loops over all tets doing
+    
+      meshSource->AddTetrahedron( point0Id,
+                                point1Id,
+                                point2Id,
+                                point3Id )
+                                
+    and finally gets the cells by doing
+    
+      meshSource->GetOutput()->GetCells();
+      
