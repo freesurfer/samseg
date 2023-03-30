@@ -6,6 +6,4 @@ from .BiasField import BiasField
 from .ProbabilisticAtlas import ProbabilisticAtlas
 from .Samseg import Samseg
 from .SamsegLongitudinal import SamsegLongitudinal
-from .SamsegLesion import SamsegLesion
-from .SamsegLongitudinalLesion import SamsegLongitudinalLesion
 from .figures import initVisualizer
