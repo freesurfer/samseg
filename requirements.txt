@@ -1,0 +1,3 @@
+scikit-learn
+numpy
+surfa @ git+https://github.com/freesurfer/surfa.git@master

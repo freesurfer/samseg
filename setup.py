@@ -8,6 +8,23 @@ import glob
 import subprocess
 import tempfile
 
+####################################################
+# add all scripts in the cli folder as
+# console_scripts or gui_scripts
+####################################################
+
+# IMPORTANT: For the postinstall script to also work
+# ALL scripts should be in the simnibs/cli folder and have
+# a if __name__ == '__main__' clause
+
+script_names = [os.path.splitext(os.path.basename(s))[0]
+                for s in glob.glob('samseg/cli/*.py')]
+
+console_scripts = []
+for s in script_names:
+    if s not in ['__init__']:
+        console_scripts.append(f'{s}=samseg.cli.{s}:main')
+
 # RUN with ITK_DIR="PATH_TO_ITK" python setup.py
 
 # Replace build-ext to run CMake in order to build the bindings
@@ -56,37 +73,37 @@ class build_ext_(build_ext):
             )
         if len(compiled_lib) > 1:
             raise OSError(
-                'Find many compile libraries. Please clean it up and try again'
+                'Found many compiled libraries. Please clean it up and try again'
             )
+        shutil.copy(compiled_lib[0], os.path.join(self.build_lib,'samseg', 'gems'))
 
 
 setup(
     name='samseg',
     version=open('VERSION').readlines()[-1].strip(),
-    description='Python bindings of the gems segmentation package.',
-#    url='https://github.com/simnibs/charm-gems',
-    author='Koen Van Leemput, Oula Puonti and Juan Eugenio Iglesias',
+    description='Sequence-Adaptive Multimodal SEGmentation (SAMSEG)',
+    url='https://github.com/freesurfer/samseg',
+    author='Koen Van Leemput, Oula Puonti, Juan Eugenio Iglesias, Stefano Cerri',
     author_email='oulap@drcmr.dk',
-    #packages=['samseg'],
     license='GPL3',
-    packages=find_namespace_packages(),
-    package_data = {
-        # If any package contains *.txt or *.rst files, include them:
-        '': ['gems/gemsbindings*'],
-    },
-    include_package_data=True,
+    packages=["samseg", "samseg.subregions", "samseg.gems", "samseg.cli", "samseg.atlas"],
+    # packages=find_namespace_packages(),
 #    long_description=open('README.md').read(),
 #    long_description_content_type='text/markdown',
     # We define ext_modules to trigger a build_ext run
     ext_modules=[
         Extension(
-            'gemsbindings', ['dummy'],
+            'samseg.gems.gemsbindings', ['dummy'],
             depends=glob.glob('gems*/*.cxx') + glob.glob('gems*/*.h')
         )],
+    entry_points={
+          'console_scripts': console_scripts,
+      },
     cmdclass={
         'build_ext': build_ext_,
       },
-    setup_requires=['numpy', 'surfa', 'scikit-learn'],
-    install_requires=['numpy', 'surfa', 'scikit-learn'],
+    install_requires=['numpy',
+                       'surfa @ git+https://github.com/freesurfer/surfa.git@master',
+                      'scikit-learn'],
     zip_safe=False
 )
