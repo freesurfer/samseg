@@ -104,8 +104,8 @@ setup(
     cmdclass={
         'build_ext': build_ext_,
       },
-    install_requires=['numpy',
-                       'surfa @ git+https://github.com/freesurfer/surfa.git@master',
-                      'scikit-learn'],
+    install_requires=['surfa',
+                      'scikit-learn',
+                      'numpy'],
     zip_safe=False
 )
