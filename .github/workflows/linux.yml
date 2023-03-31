@@ -21,13 +21,11 @@ jobs:
         git submodule init
         git submodule update
 
-    - name: Download gcc 8 compilers and set them to default
+    - name: Download gcc 8 compilers
       run: |
        yum install -y centos-release-scl && \
        yum-config-manager --enable rhel-server-rhscl-7-rpms && \
        yum install -y devtoolset-8
-       scl enable devtoolset-8 -- bash
-       source /opt/rh/devtoolset-8/enable 
 
     - name: Install CMake and Zlib
       run: | 
@@ -36,6 +34,10 @@ jobs:
         
     - name: Build ITK
       run: |
+
+        export CC=/opt/rh/devtoolset-8/root/usr/bin/gcc
+        export CXX=/opt/rh/devtoolset-8/root/usr/bin/g++
+
         mkdir ITK-build
         cd ITK-build
         cmake \
