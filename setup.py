@@ -107,5 +107,10 @@ setup(
     install_requires=['surfa',
                       'scikit-learn',
                       'numpy'],
-    zip_safe=False
+    package_data={
+        '': ["samseg/atlas/*"],
+      },
+    zip_safe=False,
+    include_package_data=True
+
 )
