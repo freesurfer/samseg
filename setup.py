@@ -108,7 +108,7 @@ setup(
                       'scikit-learn',
                       'numpy'],
     package_data={
-        '': ["samseg/atlas/*"],
+        '': [os.path.join("samseg", "atlas", "*")],
       },
     zip_safe=False,
     include_package_data=True
