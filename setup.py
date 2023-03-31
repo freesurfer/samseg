@@ -75,7 +75,9 @@ class build_ext_(build_ext):
             raise OSError(
                 'Found many compiled libraries. Please clean it up and try again'
             )
-        shutil.copy(compiled_lib[0], os.path.join(self.build_lib,'samseg', 'gems'))
+
+        if self.inplace is False:
+            shutil.copy(compiled_lib[0], os.path.join(self.build_lib,'samseg', 'gems'))
 
 
 setup(
