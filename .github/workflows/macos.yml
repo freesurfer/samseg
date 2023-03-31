@@ -2,11 +2,11 @@ name: MacOS Build
 
 on:
   push:
-    branches: [ master ]
+    branches: [ dev ]
     tags:
       - v*
   pull_request:
-    branches: [ master ]
+    branches: [ dev ]
 
 jobs:
   build:
@@ -73,7 +73,7 @@ jobs:
         make install
         cd ..
 
-    - name: Build charm-gems
+    - name: Build samseg
       run: |
         .github/workflows/macos_build.sh /Library/Frameworks/Python.framework/Versions/3.6/bin/python3
         .github/workflows/macos_build.sh /Library/Frameworks/Python.framework/Versions/3.7/bin/python3
