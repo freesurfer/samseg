@@ -26,7 +26,12 @@ jobs:
        yum install -y centos-release-scl && \
        yum-config-manager --enable rhel-server-rhscl-7-rpms && \
        yum install -y devtoolset-8
-       export PATH=/opt/rh/devtoolset-8/root/usr/bin:$PATH
+
+       ls -la /usr/bin/ | grep gcc
+       ls -la /usr/bin/ | grep g++
+
+       export CC=/usr/bin/gcc-8
+       export CXX=/usr/bin/g++-8
 
     - name: Install CMake and Zlib
       run: | 
