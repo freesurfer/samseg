@@ -26,6 +26,12 @@ jobs:
         yum install -y cmake3 zlib-devel
         ln -s /usr/bin/cmake3 /usr/bin/cmake
 
+    - name: Install correct compilers for ITK v.4.13.2 
+      run: |
+        conda install -c conda-forge gxx_linux-64=7.5 gcc_linux-64=7.5 sysroot_linux-64=2.17
+        export CC=$CONDA/envs/samseg/bin/x86_64-conda_cos6-linux-gnu-gcc
+        export CXX=$CONDA/envs/samseg/bin/x86_64-conda_cos6-linux-gnu-g++
+        
     - name: Build ITK
       run: |
         mkdir ITK-build
