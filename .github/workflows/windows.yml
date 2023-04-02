@@ -33,7 +33,7 @@ jobs:
       run: |
         md ITK-build
         cd ITK-build
-        cmake.exe -G "Visual Studio 15 2017" -DBUILD_SHARED_LIBS=OFF -DBUILD_TESTING=OFF -DBUILD_EXAMPLES=OFF -DCMAKE_BUILD_TYPE=Release ..\ITK
+        cmake.exe -G "Visual Studio 16 2019" -DBUILD_SHARED_LIBS=OFF -DBUILD_TESTING=OFF -DBUILD_EXAMPLES=OFF -DCMAKE_BUILD_TYPE=Release ..\ITK
         cmake --build . --config Release --target Install
         cd ..
       shell: cmd
