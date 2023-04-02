@@ -3,6 +3,8 @@ name: Linux Build
 on:
   push:
     branches: [ dev ]
+  tags:
+    - v*
   pull_request:
     branches: [ dev ]
 
@@ -52,6 +54,10 @@ jobs:
  
     - name: Build samseg
       run: |
+
+        export CC=/opt/rh/devtoolset-8/root/usr/bin/gcc
+        export CXX=/opt/rh/devtoolset-8/root/usr/bin/g++
+
         .github/workflows/linux_build.sh /opt/python/cp36-cp36m/bin/python
         .github/workflows/linux_build.sh /opt/python/cp37-cp37m/bin/python
         .github/workflows/linux_build.sh /opt/python/cp38-cp38/bin/python
