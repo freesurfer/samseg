@@ -32,7 +32,8 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${GEMS_RUNTIME_PATH})
 set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_FLAGS "-fPIC -fpermissive -msse2 -mfpmath=sse")
 
-add_compile_options(-Wno-inconsistent-missing-override -Wno-self-assign-field)
+# SC 2023/04/04: Commented out as it causes problem with Windows build
+# add_compile_options(-Wno-inconsistent-missing-override -Wno-self-assign-field)
 
 # to set additional debug cxxflags:
 #   export GEMS_DEBUG_CXXFLAG="-DGEMS_DEBUG_RASTERIZE_VOXEL_COUNT"
