@@ -8,7 +8,8 @@ endif()
 set(CMAKE_CXX_FLAGS_DEBUG "")
 set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "")
 
-add_compile_options(-Wno-inconsistent-missing-override -Wno-self-assign-field)
+# SC 2023/04/04: Commented out as it causes problem with Windows build
+# add_compile_options(-Wno-inconsistent-missing-override -Wno-self-assign-field)
 
 pybind11_add_module(gemsbindings
   module.cxx
