@@ -49,8 +49,8 @@ jobs:
         python setup.py bdist_wheel
         python -m pip install samseg -f .\dist\
         python -c 'import samseg'
-        rm samseg\*.pyd
-        rm samseg\Release\*.pyd
+        rm samseg\gems\*.pyd
+        rm samseg\gems\Release\*.pyd
       env:
         ZLIB_INCLUDE_DIR: .\zlib-install\include
         ZLIB_LIBRARY: .\zlib-install\lib\zlibstatic.lib
@@ -65,8 +65,8 @@ jobs:
         python setup.py bdist_wheel
         python -m pip install samseg -f .\dist\
         python -c 'import samseg'
-        rm samseg\*.pyd
-        rm samseg\Release\*.pyd
+        rm samseg\gems\*.pyd
+        rm samseg\gems\Release\*.pyd
       env:
         ZLIB_INCLUDE_DIR: .\zlib-install\include
         ZLIB_LIBRARY: .\zlib-install\lib\zlibstatic.lib
@@ -81,8 +81,8 @@ jobs:
         python setup.py bdist_wheel
         python -m pip install samseg -f .\dist\
         python -c 'import samseg'
-        rm samseg\*.pyd
-        rm samseg\Release\*.pyd
+        rm samseg\gems\*.pyd
+        rm samseg\gems\Release\*.pyd
       env:
         ZLIB_INCLUDE_DIR: .\zlib-install\include
         ZLIB_LIBRARY: .\zlib-install\lib\zlibstatic.lib
@@ -97,8 +97,8 @@ jobs:
         python setup.py bdist_wheel
         python -m pip install samseg -f .\dist\
         python -c 'import samseg'
-        rm samseg\*.pyd
-        rm samseg\Release\*.pyd
+        rm samseg\gems\*.pyd
+        rm samseg\gems\Release\*.pyd
       env:
         ZLIB_INCLUDE_DIR: .\zlib-install\include
         ZLIB_LIBRARY: .\zlib-install\lib\zlibstatic.lib
