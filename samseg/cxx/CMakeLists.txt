@@ -19,6 +19,8 @@ pybind11_add_module(gemsbindings
   pyKvlMesh.cxx
   pyKvlOptimizer.cxx
   pyKvlTransform.cxx
+  pyKvlRigidRegistration.cxx
+  pyKvlAffineRegistration.cxx
 )
 
 # link utilities

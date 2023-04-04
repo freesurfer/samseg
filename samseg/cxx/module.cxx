@@ -5,6 +5,8 @@
 #include "pyKvlMesh.h"
 #include "pyKvlOptimizer.h"
 #include "pyKvlTransform.h"
+#include "pyKvlRigidRegistration.h"
+#include "pyKvlAffineRegistration.h"
 #include "itkMultiThreader.h"
 
 namespace py = pybind11;
@@ -113,5 +115,58 @@ PYBIND11_MODULE(gemsbindings, m) {
             .def("write", &KvlMeshCollection::Write, py::return_value_policy::take_ownership)
             .def("generatefromsinglemesh", &KvlMeshCollection::GenerateFromSingleMesh, py::return_value_policy::take_ownership)
             ;
+
+    py::class_<KvlRigidRegistration>(m,"KvlRigidRegistration")
+            .def(py::init<>())
+            .def(py::init<double,
+                int,
+                int,
+                const py::array_t<double> &,
+                double,
+                const py::array_t<double> &,
+                bool,
+                double,
+                std::string>(),
+                py::arg("translationScale"),
+                py::arg("numberOfIterations"),
+                py::arg("numberOfHistogramBins"),
+                py::arg("shrinkScales"),
+                py::arg("backgroundGrayLevel"),
+                py::arg("smoothingSigma"),
+                py::arg("useCenterOfMassInitialization"),
+                py::arg("samplingRate"),
+                py::arg("interpolator"))
+            .def("read_images", &KvlRigidRegistration::ReadImages, py::arg("fixedImageFileName"), py::arg("movingImageFileName"))
+            .def("initialize_transform", &KvlRigidRegistration::InitializeTransform)
+            .def("register", &KvlRigidRegistration::Register)
+            .def("write_out_result", &KvlRigidRegistration::WriteOutResults, py::arg("outputFileName"))
+            .def("get_transformation_matrix", &KvlRigidRegistration::GetFinalTransformation, py::return_value_policy::take_ownership)
+            ;
+
+    py::class_<KvlAffineRegistration>(m,"KvlAffineRegistration")
+            .def(py::init<>())
+            .def(py::init<double,
+                int,
+                const py::array_t<double> &,
+                double,
+                const py::array_t<double> &,
+                bool,
+                double,
+                std::string>(),
+                py::arg("translationScale"),
+                py::arg("numberOfIterations"),
+                py::arg("shrinkScales"),
+                py::arg("backgroundGrayLevel"),
+                py::arg("smoothingSigma"),
+                py::arg("useCenterOfMassInitialization"),
+                py::arg("samplingRate"),
+                py::arg("interpolator"))
+            .def("read_images", &KvlAffineRegistration::ReadImages, py::arg("fixedImageFileName"), py::arg("movingImageFileName"))
+            .def("initialize_transform", &KvlAffineRegistration::InitializeTransform)
+            .def("register", &KvlAffineRegistration::Register)
+            .def("write_out_result", &KvlAffineRegistration::WriteOutResults, py::arg("outputFileName"))
+            .def("get_transformation_matrix", &KvlAffineRegistration::GetFinalTransformationMatrix, py::return_value_policy::take_ownership)
+            ;
+    
      m.def("setGlobalDefaultNumberOfThreads", &setGlobalDefaultNumberOfThreads, "Sets the maximum number of threads for ITK.");
 }
