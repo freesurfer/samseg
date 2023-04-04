@@ -33,8 +33,8 @@ jobs:
       run: |
         md ITK-build
         cd ITK-build
-        cmake.exe -G "Visual Studio 16 2019" -DBUILD_SHARED_LIBS=OFF -DBUILD_TESTING=OFF -DBUILD_EXAMPLES=OFF -DCMAKE_BUILD_TYPE=Release ..\ITK -DCMAKE_INSTALL_PREFIX=..\ITK-install
-        cmake --build . --config Release --target install
+        cmake.exe -G "Visual Studio 16 2019" -DBUILD_SHARED_LIBS=OFF -DBUILD_TESTING=OFF -DBUILD_EXAMPLES=OFF -DCMAKE_BUILD_TYPE=Release ..\ITK
+        cmake --build . --config Release --target Install
         cd ..
       shell: cmd
          
@@ -54,8 +54,7 @@ jobs:
       env:
         ZLIB_INCLUDE_DIR: .\zlib-install\include
         ZLIB_LIBRARY: .\zlib-install\lib\zlibstatic.lib
-        ITK_DIR: ITK-install
-        
+
     - name: Build samseg python 3.7
       uses: actions/setup-python@v2
       with:
@@ -71,7 +70,6 @@ jobs:
       env:
         ZLIB_INCLUDE_DIR: .\zlib-install\include
         ZLIB_LIBRARY: .\zlib-install\lib\zlibstatic.lib
-        ITK_DIR: ITK-install
 
     - name: Build samseg python 3.8
       uses: actions/setup-python@v2
@@ -88,8 +86,7 @@ jobs:
       env:
         ZLIB_INCLUDE_DIR: .\zlib-install\include
         ZLIB_LIBRARY: .\zlib-install\lib\zlibstatic.lib
-        ITK_DIR: ITK-install
- 
+        
     - name: Build samseg python 3.9
       uses: actions/setup-python@v2
       with:
@@ -105,7 +102,6 @@ jobs:
       env:
         ZLIB_INCLUDE_DIR: .\zlib-install\include
         ZLIB_LIBRARY: .\zlib-install\lib\zlibstatic.lib
-        ITK_DIR: ITK-install
 
     - name: Upload artifact
       uses: actions/upload-artifact@v2
