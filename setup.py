@@ -58,7 +58,7 @@ class build_ext_(build_ext):
                     check=True
                 )
                 compiled_lib = glob.glob(os.path.join(
-                    package_root, 'samseg', 'gems', 'gemsbindings.*.pyd'
+                    package_root, 'samseg', 'gems', 'Release', 'gemsbindings.*.pyd'
                 ))
             else:
                 subprocess.run(['make', '-C', tmpdir], check=True)
