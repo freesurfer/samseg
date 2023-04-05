@@ -158,7 +158,7 @@ def main():
 
     # If lesion atlas was created on the fly, remove it
     if not args.atlas and args.lesion:
-        shutil.rmtree(os.path.join(args.outputDirectory, 'lesion_atlas'))
+        shutil.rmtree(os.path.join(args.output, 'lesion_atlas'))
 
 if __name__ == '__main__':
     main()
