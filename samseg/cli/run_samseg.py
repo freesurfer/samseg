@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 import os
+import shutil
 import sys
 import json
 import scipy.io
@@ -98,7 +99,13 @@ def main():
     else:
         # Atlas defaults
         if args.lesion:
-            atlasDir = os.path.join(SAMSEGDIR, 'atlas', '20Subjects_smoothing2_down2_smoothingForAffine2_lesion')
+            from samseg.SamsegUtility import createLesionAtlas
+            # Create lesion atlas on the fly, use output directory as temporary folder
+            os.makedirs(os.path.join(args.outputDirectory, 'lesion_atlas'), exist_ok=True)
+            atlasDir = os.path.join(args.outputDirectory, 'lesion_atlas')
+            createLesionAtlas(os.path.join(SAMSEGDIR, 'atlas', '20Subjects_smoothing2_down2_smoothingForAffine2'),
+                              os.path.join(SAMSEGDIR, 'atlas', 'Lesion_Components'),
+                              atlasDir)
         else:
             atlasDir = os.path.join(SAMSEGDIR, 'atlas', '20Subjects_smoothing2_down2_smoothingForAffine2')
 
@@ -203,6 +210,10 @@ def main():
     with open(costfile, 'a') as file:
         for multiResolutionLevel, item in enumerate(optimizationSummary):
             file.write('atlasRegistrationLevel%d %d %f\n' % (multiResolutionLevel, item['numberOfIterations'], item['perVoxelCost']))
+
+    # If lesion atlas was created on the fly, remove it
+    if not args.atlas and args.lesion:
+        shutil.rmtree(os.path.join(args.outputDirectory, 'lesion_atlas'))
 
     timer.mark('run_samseg complete')
 

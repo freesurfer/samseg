@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 import sys
+import shutil
 import os
 import argparse
 import surfa as sf
@@ -78,9 +79,16 @@ def main():
     else:
         # Atlas defaults
         if args.lesion:
-            atlasDir = os.path.join(SAMSEGDIR, 'atlas', '20Subjects_smoothing2_down2_smoothingForAffine2_lesion')
+            from samseg.SamsegUtility import createLesionAtlas
+            # Create lesion atlas on the fly, use output directory as temporary folder
+            os.makedirs(os.path.join(args.output, 'lesion_atlas'), exist_ok=True)
+            atlasDir = os.path.join(args.output, 'lesion_atlas')
+            createLesionAtlas(os.path.join(SAMSEGDIR, 'atlas', '20Subjects_smoothing2_down2_smoothingForAffine2'),
+                              os.path.join(SAMSEGDIR, 'atlas', 'Lesion_Components'),
+                              atlasDir)
         else:
             atlasDir = os.path.join(SAMSEGDIR, 'atlas', '20Subjects_smoothing2_down2_smoothingForAffine2')
+
 
     # Setup the visualization tool
     visualizer = samseg.initVisualizer(args.showfigs, args.movie)
@@ -147,6 +155,10 @@ def main():
     samsegLongitudinal.segment(saveWarp=args.save_warp)
 
     timer.mark('run_samseg_long complete')
+
+    # If lesion atlas was created on the fly, remove it
+    if not args.atlas and args.lesion:
+        shutil.rmtree(os.path.join(args.outputDirectory, 'lesion_atlas'))
 
 if __name__ == '__main__':
     main()

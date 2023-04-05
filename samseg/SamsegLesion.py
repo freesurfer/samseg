@@ -156,6 +156,17 @@ class SamsegLesion(Samseg):
         lesion[self.mask] = (np.array(np.argmax(posteriors, 1), dtype=np.uint32) == self.lesionStructureNumber)
         lesion *= intensityMask
 
+        # Instead of sampling from all the structures (and lesion),
+        # we treat the problem as a 2-class segmentation task (non-lesion vs lesion).
+        # This allows us to achieve faster sampling while obtaining the same exact results
+        numberOfStructures = priors.shape[-1]
+        otherStructureNumbers = [i for i in range(numberOfStructures) if i != self.lesionStructureNumber]
+        priors =  np.array(priors / 65535, dtype=np.float32)
+        # Precompute priors and unnormalized posteriors for the other structures (non-lesion class)
+        otherStructurePriors = priors[:, otherStructureNumbers]
+        otherStructurePriors /= np.expand_dims(np.sum(otherStructurePriors, axis=-1) + eps, axis=1)
+        otherStructureUnnormalizedPost = np.sum((likelihoods[:, otherStructureNumbers] * otherStructurePriors), axis=-1)
+
         self.visualizer.show(image_list=[lesion], title="Initial lesion segmentation")
 
         # Initialize the VAE tensorflow model and its various settings.
@@ -163,7 +174,7 @@ class SamsegLesion(Samseg):
         vae = VAE(self.atlasDir, self.transform, imageSize, self.seed)
 
         # Do the actual sampling of lesion, latent variables of the VAE model, and mean/variance of the lesion intensity model.
-        averagePosteriors = np.zeros_like(likelihoods)
+        averagePosteriors = np.zeros(posteriors.shape[0])
         self.visualizer.start_movie(window_id="Lesion prior using VAE only", title="Lesion prior using VAE only -- the movie")
         self.visualizer.start_movie(window_id="Lesion sample", title="Lesion sample -- the movie")
         for sweepNumber in range(self.numberOfBurnInSteps + self.numberOfSamplingSteps):
@@ -187,8 +198,7 @@ class SamsegLesion(Samseg):
             # (Implementation-wise the latter is encoded in the VAE prior). At the same time we also
             # compute the full posterior of each structure, which is at the end the thing we're averaging
             # over (i.e., the reason why we're sampling)
-            effectivePriors = np.array(priors / 65535, dtype=np.float32)
-            effectivePriors[:, self.lesionStructureNumber] *= lesionPriorVAE
+            priorLes = lesionPriorVAE * priors[:, self.lesionStructureNumber]
             if hasattr(self.visualizer, 'show_flag'):
                 tmp = np.zeros(imageSize)
                 tmp[self.mask] = effectivePriors[:, self.lesionStructureNumber]
@@ -197,16 +207,10 @@ class SamsegLesion(Samseg):
 
             # Generative model where the atlas generates *candidate* lesions, and the VAE prior is sampled
             # from *only within the candidates*.
-            numberOfStructures = priors.shape[-1]
-            otherStructureNumbers = [i for i in range(numberOfStructures) if i != self.lesionStructureNumber]
-            otherStructurePriors = effectivePriors[:, otherStructureNumbers]
-            otherStructurePriors /= (np.sum(otherStructurePriors, axis=1).reshape(-1, 1) + eps)
-            effectivePriors[:, otherStructureNumbers] = otherStructurePriors * \
-                                                        (1 - effectivePriors[:, self.lesionStructureNumber].reshape(-1, 1))
-            likelihoods[:, self.lesionStructureNumber] = self.gmm.getGaussianLikelihoods(data, mean, variance)
-            posteriors = effectivePriors * likelihoods
-            posteriors /= np.expand_dims(np.sum(posteriors, axis=1) + eps, 1)
-            sample = self.rngNumpy.random(numberOfVoxels) <= posteriors[:, self.lesionStructureNumber]
+            likelihoodLes = self.gmm.getGaussianLikelihoods(data, mean, variance)
+            posteriorsLes = priorLes * likelihoodLes
+            posteriorsLes /= posteriorsLes + otherStructureUnnormalizedPost * (1 - priorLes) + eps
+            sample = self.rngNumpy.random(numberOfVoxels) <= posteriorsLes
             lesion = np.zeros(imageSize)
             lesion[self.mask] = sample
 
@@ -215,7 +219,7 @@ class SamsegLesion(Samseg):
             # Collect data after burn in steps
             if sweepNumber >= self.numberOfBurnInSteps:
                 print('Sample ' + str(sweepNumber + 1 - self.numberOfBurnInSteps) + ' times')
-                averagePosteriors += posteriors / self.numberOfSamplingSteps
+                averagePosteriors += posteriorsLes / self.numberOfSamplingSteps
             else:
                 print('Burn-in ' + str(sweepNumber + 1) + ' times')
 
@@ -223,5 +227,9 @@ class SamsegLesion(Samseg):
         self.visualizer.show_movie(window_id="Lesion prior using VAE only")
         self.visualizer.show_movie(window_id="Lesion sample")
 
+        # Update posteriors of lesion and all the other structures after sampling
+        posteriors[:, self.lesionStructureNumber] = averagePosteriors
+        posteriors[:, otherStructureNumbers] *= np.expand_dims(1 - averagePosteriors, axis=1)
+
         # Return
-        return averagePosteriors, biasFields, nodePositions, data, priors
+        return posteriors, biasFields, nodePositions, data, priors

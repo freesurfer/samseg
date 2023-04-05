@@ -3,13 +3,15 @@ import numpy as np
 import itertools
 import datetime as dt
 import surfa as sf
+import shutil 
 
 from samseg import gems
 from .utilities import icv
-from .io import kvlReadCompressionLookupTable, kvlReadSharedGMMParameters
+from .io import kvlReadCompressionLookupTable, kvlReadSharedGMMParameters, kvlWriteCompressionLookupTable
 from .figures import initVisualizer
 from .utilities import requireNumpyArray
 
+eps = np.finfo(float).eps
 
 def getModelSpecifications(atlasDir, userModelSpecifications={}, pallidumAsWM=True, gmmFileName=None):
 
@@ -387,3 +389,93 @@ class Timer:
 
     def mark(self, message):
         print('%s: %s' % (message, str(self.elapsed)))
+
+
+def createLesionAtlas(samseg_atlas_dir, lesion_components_dir, output_dir):
+
+    # Create lesion atlas directory from samseg atlas dir and lesion components (VAE and lesion alphas)
+    # Load lesion alphas
+    lesion_alphas = np.load(os.path.join(lesion_components_dir, "lesion_alphas.npz"))     
+
+    # Create new atlas folder
+    os.makedirs(output_dir, exist_ok=True)
+
+    # Remove structures from samseg atlas
+    remove_structures = ["WM-hypointensities", "non-WM-hypointensities"]
+    
+    # New class(es) information
+    new_classes = ["Lesions"]
+    new_components_classes = [1]
+    new_labels = [99]
+    rgbs = [[255, 165, 0]]
+
+    # Assuming 2 multi-resolution meshes
+    for level in range(2):
+
+        # Retrieve all the SAMSEG related files
+        # Here we are making some assumptions about file names
+        mesh_collection_path = os.path.join(samseg_atlas_dir, "atlas_level" + str(level + 1) + ".txt.gz")
+        freesurfer_labels, names, colors = kvlReadCompressionLookupTable(os.path.join(samseg_atlas_dir, 'compressionLookupTable.txt'))
+        # Get also compressed labels, as they are in the same order as FreeSurfer_labels
+        compressed_labels = list(np.arange(0, len(freesurfer_labels)))
+
+        # Read mesh collection
+        mesh_collection = gems.KvlMeshCollection()
+        mesh_collection.read(mesh_collection_path)
+
+        # Load reference mesh
+        mesh = mesh_collection.reference_mesh
+        alphas = mesh.alphas
+
+        # Remove structures from alphas
+        for structure in remove_structures:
+            idx = names.index(structure)
+            compressed_labels.pop(idx)
+            freesurfer_labels.pop(idx)
+            colors.pop(idx)
+            names.pop(idx)
+
+        # Create new_alphas and re-normalize
+        new_alphas = alphas[:, compressed_labels]
+        normalizer = np.sum(new_alphas, axis=1)
+        alphas = new_alphas / normalizer[:, None]
+
+        # Now add estimated alphas
+        estimated_alphas = lesion_alphas["lesion_alphas_level_" + str(level + 1) + ".npy"]
+        new_alphas = np.zeros([alphas.shape[0], alphas.shape[1] + len(new_classes)])
+        compressed_labels = np.arange(0, alphas.shape[1])
+        new_alphas[:, compressed_labels] = (1 - estimated_alphas[:, None]) * alphas
+        new_alphas[:, -1] = estimated_alphas
+
+        # Re-normalize alphas
+        normalizer = np.sum(new_alphas, axis=1) + eps
+        alphas = new_alphas / normalizer[:, None]
+        # Add alphas in mesh
+        mesh.alphas = alphas
+        # Save mesh
+        mesh_collection.write(os.path.join(output_dir, "atlas_level" + str(level + 1) + ".txt"))
+
+    # Create new compression lookup table
+    for class_name, fs_label, rgb in zip(new_classes, new_labels, rgbs):
+        names.append(class_name)
+        freesurfer_labels.append(fs_label)
+        colors.append([255, rgb[0], rgb[1], rgb[2]])
+
+    kvlWriteCompressionLookupTable(os.path.join(output_dir, 'compressionLookupTable.txt'), freesurfer_labels, names, colors)
+
+    # Load GMM file, read its content, add new classes with their relative components and save everything
+    with open(os.path.join(samseg_atlas_dir, 'sharedGMMParameters.txt'), 'r') as f_r:
+        gmm_file = f_r.readlines()
+    for class_name, gmm_component in zip(new_classes, new_components_classes):
+        gmm_file.append(class_name + " " + str(gmm_component) + " " + class_name + "\n")
+    with open(os.path.join(output_dir, 'sharedGMMParameters.txt'), 'w' ) as f_w:
+        f_w.write(''.join(gmm_file))
+
+    # Copy all the other parameters
+    shutil.copy(os.path.join(samseg_atlas_dir, 'template.nii.gz'), os.path.join(output_dir, 'template.nii.gz'))
+    shutil.copy(os.path.join(samseg_atlas_dir, 'atlasForAffineRegistration.txt.gz'), os.path.join(output_dir, 'atlasForAffineRegistration.txt.gz'))
+    shutil.copy(os.path.join(samseg_atlas_dir, 'modifiedFreeSurferColorLUT.txt'), os.path.join(output_dir, 'modifiedFreeSurferColorLUT.txt'))
+    shutil.copytree(os.path.join(lesion_components_dir, 'VAE'), os.path.join(output_dir, 'VAE'), dirs_exist_ok=True)    
+
+
+
