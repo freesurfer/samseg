@@ -190,7 +190,7 @@ class SamsegLongitudinal:
         sstDir, _ = os.path.split(self.sstFileNames[0])
 
         # Affine atlas registration to sst
-        templateFileName = os.path.join(self.atlasDir, 'template.nii')
+        templateFileName = os.path.join(self.atlasDir, 'template.nii.gz')
         affineRegistrationMeshCollectionFileName = os.path.join(self.atlasDir, 'atlasForAffineRegistration.txt.gz')
 
         affine = Affine(imageFileName=self.sstFileNames[0],
@@ -210,7 +210,7 @@ class SamsegLongitudinal:
         #
         # =======================================================================================
 
-        templateFileName = os.path.join(self.atlasDir, 'template.nii')
+        templateFileName = os.path.join(self.atlasDir, 'template.nii.gz')
         self.sstModel.imageBuffers, self.sstModel.transform, self.sstModel.voxelSpacing, self.sstModel.cropping = readCroppedImages(self.sstFileNames, templateFileName, self.imageToImageTransformMatrix)
 
         self.imageBuffersList = []

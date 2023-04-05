@@ -94,7 +94,7 @@ class Samseg:
         # Initialize some objects
         self.affine = Affine( imageFileName=self.imageFileNames[0],
                               meshCollectionFileName=os.path.join(self.atlasDir, 'atlasForAffineRegistration.txt.gz'),
-                              templateFileName=os.path.join(self.atlasDir, 'template.nii' ) )
+                              templateFileName=os.path.join(self.atlasDir, 'template.nii.gz' ) )
         self.probabilisticAtlas = ProbabilisticAtlas()
 
         # Get full model specifications and optimization options (using default unless overridden by user)
@@ -318,7 +318,7 @@ class Samseg:
         else:
             self.imageBuffers, self.transform, self.voxelSpacing, self.cropping = readCroppedImages(
                 self.imageFileNames,
-                os.path.join(self.atlasDir, 'template.nii'),
+                os.path.join(self.atlasDir, 'template.nii.gz'),
                 self.imageToImageTransformMatrix
             )
 
