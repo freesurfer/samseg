@@ -525,7 +525,7 @@ class Samseg:
 
         # extract geometries
         source = sf.load_volume(self.imageFileNames[0]).geom
-        target = sf.load_volume(os.path.join(self.atlasDir, 'template.nii')).geom
+        target = sf.load_volume(os.path.join(self.atlasDir, 'template.nii.gz')).geom
 
         # extract vox-to-vox template transform
         # TODO: Grabbing the transform from the saved .mat file in either the cross or base
