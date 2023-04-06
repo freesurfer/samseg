@@ -88,7 +88,7 @@ setup(
     author='Koen Van Leemput, Oula Puonti, Juan Eugenio Iglesias, Stefano Cerri',
     author_email='oulap@drcmr.dk',
     license='GPL3',
-    packages=["samseg", "samseg.subregions", "samseg.gems", "samseg.cli", "samseg.atlas"],
+    packages=["samseg", "samseg.subregions", "samseg.gems", "samseg.cli", "samseg.atlas", "samseg.atlas.Lesion_Components", "samseg.atlas.Lesion_Components.VAE"],
     # packages=find_namespace_packages(),
 #    long_description=open('README.md').read(),
 #    long_description_content_type='text/markdown',
