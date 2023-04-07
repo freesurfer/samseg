@@ -69,7 +69,7 @@ def parseArguments(argv):
     parser.add_argument('--save-warp', action='store_true', help='Save the image->template warp field.')
     parser.add_argument('--movie', action='store_true', default=False, help='Show history as arrow key controlled time sequence.')
 
-    args = parser.parse_args()
+    args = parser.parse_args(argv)
 
     return args
 

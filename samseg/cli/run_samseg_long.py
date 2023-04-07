@@ -44,7 +44,7 @@ def parseArguments(argv):
     parser.add_argument('--showfigs', action='store_true', default=False, help='Show figures during run.')
     parser.add_argument('--movie', action='store_true', default=False, help='Show history as arrow key controlled time sequence.')
 
-    args = parser.parse_args()
+    args = parser.parse_args(argv)
 
     return args
 
