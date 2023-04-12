@@ -34,7 +34,7 @@ This repository contains the code for the Sequence Adaptive Multimodal SEGmentat
 
 8. Export compilers installed with conda:
 `export CC=<your_conda_path>/envs/samseg/bin/x86_64-conda_cos6-linux-gnu-gcc `
-`export CC=<your_conda_path>/envs/samseg/bin/x86_64-conda_cos6-linux-gnu-g++ `
+`export CXX=<your_conda_path>/envs/samseg/bin/x86_64-conda_cos6-linux-gnu-g++ `
 
 9. Run CMAKE:
 `cmake \
