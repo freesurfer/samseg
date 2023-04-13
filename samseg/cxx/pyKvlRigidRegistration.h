@@ -21,7 +21,7 @@ class KvlRigidRegistration {
         {
             registerer = kvl::RegisterImages<RigidTransformType, MetricType>::New();
             //Set MI histogram bins
-            registerer->GetMetric()->SetNumberOfHistogramBins(50);
+            registerer->GetMetric()->SetNumberOfHistogramBins(64);
             registerer->SetCenterOfMassInit(false);
         }
     

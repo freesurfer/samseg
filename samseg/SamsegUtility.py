@@ -477,5 +477,15 @@ def createLesionAtlas(samseg_atlas_dir, lesion_components_dir, output_dir):
     shutil.copy(os.path.join(samseg_atlas_dir, 'modifiedFreeSurferColorLUT.txt'), os.path.join(output_dir, 'modifiedFreeSurferColorLUT.txt'))
     shutil.copytree(os.path.join(lesion_components_dir, 'VAE'), os.path.join(output_dir, 'VAE'), dirs_exist_ok=True)    
 
+def coregister(fixed_image, moving_image, output_image, affine=False):
 
+    if affine:
+        registerer = gems.KvlAffineRegistration()
+    else:
+        registerer = gems.KvlRigidRegistration()
+
+    registerer.read_images(fixed_image, moving_image)
+    registerer.initialize_transform()
+    registerer.register()
+    registerer.write_out_result(output_image)
 

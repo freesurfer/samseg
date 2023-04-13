@@ -9,6 +9,7 @@ import argparse
 import surfa as sf
 import samseg
 from samseg import SAMSEGDIR
+from samseg.SamsegUtility import coregister
 
 
 def parseArguments(argv):
@@ -47,6 +48,8 @@ def parseArguments(argv):
     parser.add_argument('--mesh-stiffness', type=float, help='Override mesh stiffness.')
     parser.add_argument('--smooth-wm-cortex-priors', type=float, help='Sigma value to smooth the WM and cortex atlas priors.')
     parser.add_argument('--bias-field-smoothing-kernel', type=float, help='Distance in mm of sinc function center to first zero crossing.')
+    parser.add_argument('--coregister', action='store_true', default=False, help='Co-register input images to the first image.')
+    parser.add_argument('--affine-coregistration', action='store_true', default=False, help='Use affine transformation for co-registration (default is rigid).') 
     # optional lesion options
     parser.add_argument('--lesion', action='store_true', default=False, help='Enable lesion segmentation (requires tensorflow).')
     parser.add_argument('--threshold', type=float, default=0.3, help='Lesion threshold for final segmentation. Lesion segmentation must be enabled.')
@@ -91,7 +94,7 @@ def main():
     # Remove previous cost log
     costfile = os.path.join(args.outputDirectory, 'cost.txt')
     if os.path.exists( costfile ):
-        os.remove( costfile )
+        os.remove(costfile)
 
     # Get the atlas directory
     if args.atlas:
@@ -112,6 +115,18 @@ def main():
 
     # Setup the visualization tool
     visualizer = samseg.initVisualizer(args.showfigs, args.movie)
+
+    # Coregister images
+    if args.coregister and len(args.inputFileNames) > 1:
+        print("Co-registration")
+        # Assuming first input is our fixed image
+        fixed = args.inputFileNames[0]
+        for m, moving in enumerate(args.inputFileNames[1:]):
+            out_name = os.path.join(args.outputDirectory, 'mode%02d_coreg.nii.gz' % (m + 2))
+            coregister(fixed, moving, out_name, args.affine_coregistration)
+            # Override inputFileNames with new registered image path
+            args.inputFileNames[m + 1] = out_name
+        
 
     # ------ Prepare Samseg Parameters ------
 
