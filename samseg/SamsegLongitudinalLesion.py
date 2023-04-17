@@ -29,6 +29,7 @@ class SamsegLongitudinalLesion(SamsegLongitudinal):
         thresholdSearchString=None,
         modeNames=None,
         pallidumAsWM=True,
+        saveModelProbabilities=False,
         savePosteriors=False,
         numberOfSamplingSteps=50,
         numberOfBurnInSteps=50,
@@ -63,6 +64,7 @@ class SamsegLongitudinalLesion(SamsegLongitudinal):
         thresholdSearchString=thresholdSearchString,
         modeNames=modeNames,
         pallidumAsWM=pallidumAsWM,
+        saveModelProbabilities=saveModelProbabilities,
         savePosteriors=savePosteriors,
         tpToBaseTransforms=tpToBaseTransforms
         )
@@ -121,6 +123,7 @@ class SamsegLongitudinalLesion(SamsegLongitudinal):
                 targetSearchStrings=self.targetSearchStrings,
                 modeNames=self.modeNames,
                 pallidumAsWM=self.pallidumAsWM,
+                saveModelProbabilities=self.saveModelProbabilities,
                 savePosteriors=self.savePosteriors,
                 numberOfSamplingSteps=self.numberOfSamplingSteps,
                 numberOfBurnInSteps=self.numberOfBurnInSteps,

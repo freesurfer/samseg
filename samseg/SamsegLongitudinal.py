@@ -91,6 +91,7 @@ class SamsegLongitudinal:
         thresholdSearchString=None,
         modeNames=None,
         pallidumAsWM=True,
+        saveModelProbabilities=False,
         savePosteriors=False,
         tpToBaseTransforms=None,
         ):
@@ -134,6 +135,7 @@ class SamsegLongitudinal:
         else:
             self.visualizer = visualizer
 
+        self.saveModelProbabilities = saveModelProbabilities
         self.saveHistory = saveHistory
         self.saveMesh = saveMesh
         self.saveSSTResults = saveSSTResults
@@ -763,6 +765,10 @@ class SamsegLongitudinal:
             if saveWarp:
                 timepointModel.saveWarpField(os.path.join(timepointDir, 'template.m3z'))
 
+            # Save the Gaussian priors, (normalized) likelihoods and posteriors
+            if self.saveModelProbabilities:
+                timepointModel.saveGaussianProbabilities( os.path.join(timepointModel.savePath, 'probabilities') )
+
             # Save the final mesh collection
             if self.saveMesh:
                 print('Saving the final mesh in template space')
@@ -875,6 +881,7 @@ class SamsegLongitudinal:
                 targetSearchStrings=self.targetSearchStrings,
                 modeNames=self.modeNames,
                 pallidumAsWM=self.pallidumAsWM,
+                saveModelProbabilities=self.saveModelProbabilities,
                 savePosteriors=self.savePosteriors
             ))
 
