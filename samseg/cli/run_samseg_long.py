@@ -32,16 +32,17 @@ def parseArguments(argv):
     parser.add_argument('-a', '--atlas', metavar='DIR', help='Point to an alternative atlas directory.')
     parser.add_argument('--deformation-hyperprior', type=float, default=20.0, help='Strength of the latent deformation hyperprior.')
     parser.add_argument('--gmm-hyperprior', type=float, default=0.5, help='Strength of the latent GMM hyperprior.')
-    parser.add_argument('--save-warp', action='store_true', help='Save the image->template warp fields.')
-    parser.add_argument('--save-mesh', action='store_true', help='Save the final mesh of each timepoint in template space.')
-    parser.add_argument('--save-posteriors', nargs='*', help='Save posterior volumes to the "posteriors" subdirectory.')
     parser.add_argument('--pallidum-separate', action='store_true', default=False, help='Move pallidum outside of global white matter class. Use this flag when T2/flair is used.')
     parser.add_argument('--threads', type=int, default=default_threads, help='Number of threads to use. Defaults to current OMP_NUM_THREADS or 1.')
     parser.add_argument('--tp-to-base-transform', nargs='+', required=False, help='Transformation file for each time point to base.')
     parser.add_argument('--force-different-resolutions', action='store_true', default=False, help='Force run even if time points have different resolutions.')
     # optional debugging options
     parser.add_argument('--history', action='store_true', default=False, help='Save history.')
+    parser.add_argument('--save-posteriors', nargs='*', help='Save posterior volumes to the "posteriors" subdirectory.')
+    parser.add_argument('--save-probabilities', action='store_true', help='Save final modal class probabilities to "probabilities" subdirectory.')
     parser.add_argument('--showfigs', action='store_true', default=False, help='Show figures during run.')
+    parser.add_argument('--save-warp', action='store_true', help='Save the image->template warp fields.')
+    parser.add_argument('--save-mesh', action='store_true', help='Save the final mesh of each timepoint in template space.')
     parser.add_argument('--movie', action='store_true', default=False, help='Show history as arrow key controlled time sequence.')
 
     args = parser.parse_args(argv)
@@ -122,6 +123,7 @@ def main():
         targetSearchStrings=['Cerebral-White-Matter'],
         modeNames=args.mode,
         pallidumAsWM=(not args.pallidum_separate),
+        saveModelProbabilities=args.save_probabilities,
         strengthOfLatentDeformationHyperprior=args.deformation_hyperprior,
         strengthOfLatentGMMHyperprior=args.gmm_hyperprior,
         savePosteriors=savePosteriors,
