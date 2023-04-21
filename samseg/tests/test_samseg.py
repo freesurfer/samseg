@@ -2,15 +2,14 @@ import numpy as np
 import pytest
 import surfa as sf
 import os
+import samseg
 from scipy import ndimage
 from scipy.io import loadmat
 from .. import SAMSEGDIR
 from ..SamsegUtility import coregister
-from ..Samseg import initVisualizer
+from ..Affine import initializationOptions
+from ..Samseg import initVisualizer, Samseg
 from ..io import kvlReadSharedGMMParameters
-from .. import Samseg_utils
-
-import nibabel as nib
 
 @pytest.fixture(scope='module')
 def testernie_nii():
@@ -76,17 +75,35 @@ def test_mni_affine(tmppath, testmni_nii):
     trans_mni.geom.vox2world = trans_affine
     trans_mni.save(trans_scan_name)
 
-    trans_settings = {"translation_scale": -100,
-                      "max_iter": 10,
-                      "shrink_factors": [0],
-                      "smoothing_factors": [4.0],
-                      "center_of_mass": True,
-                      "samp_factor": 1.0,
-                      "bg_value": 0}
+    affine_settings = {"translation_scale": -100,
+                       "max_iter": 10,
+                       "shrink_factors": [0],
+                       "smoothing_factors": [4.0],
+                       "center_of_mass": True,
+                       "samp_factor": 1.0,
+                       "bg_value": 0}
     RAS2LPS = np.diag([-1, -1, 1, 1])
-    estimated_trans_mat = Samseg_utils._init_atlas_affine(str(trans_scan_name),
-                                                          testmni_nii,
-                                                          trans_settings)
+
+    registerer = samseg.gems.KvlAffineRegistration(
+                        affine_settings["translation_scale"],
+                        affine_settings["max_iter"],
+                        0,
+                        affine_settings["shrink_factors"],
+                        affine_settings["bg_value"],
+                        affine_settings["smoothing_factors"],
+                        affine_settings["center_of_mass"],
+                        affine_settings["samp_factor"],
+                        "b",
+                        )
+    registerer.read_images(trans_scan_name, testmni_nii)
+    registerer.initialize_transform()
+    registerer.register()
+    tmp = registerer.get_transformation_matrix()
+
+    # ITK returns the matrix mapping the fixed image to the
+    # moving image so let's invert it.
+    estimated_trans_mat = np.linalg.inv(tmp)
+
     np.testing.assert_allclose(trans_mat,
                                RAS2LPS@estimated_trans_mat@RAS2LPS)
 
@@ -109,24 +126,39 @@ def test_atlas_affine(tmppath, testmni_nii, testtemplate_nii, testaffinemesh_msh
                            "affine_rotations": [0],
                            "affine_horizontal_shifts": [0],
                            "affine_vertical_shifts": [0],
-                           "neck_search_bounds": [0, 0],
-                           "downsampling_factor_affine": 1.0}
+                           "downsampling_factor_affine": 1.0,
+                           "scaling_center": [0.0, -100.0, 0.0]}
     visualizer = initVisualizer(False, False)
-    Samseg_utils._register_atlas_to_input_affine(str(trans_scan_name),
-                                                 testtemplate_nii,
-                                                 testaffinemesh_msh,
-                                                 testaffinemesh_msh,
-                                                 testaffinemesh_msh,
-                                                 str(tmppath),
-                                                 str(template_coregistered_name),
-                                                 init_atlas_settings,
-                                                 None,
-                                                 visualizer,
-                                                 True,
-                                                 init_transform=None,
-                                                 world_to_world_transform_matrix=None,
-                                                 scaling_center=[0, 0, 0],
-                                                 k_values=[100])
+
+    init_options = initializationOptions(
+        pitchAngles=[theta * np.pi / 180 for theta in init_atlas_settings["affine_rotations"]],
+        scales=init_atlas_settings["affine_scales"],
+        scalingCenter=init_atlas_settings["scaling_center"],
+        horizontalTableShifts=init_atlas_settings["affine_horizontal_shifts"],
+        verticalTableShifts=init_atlas_settings["affine_vertical_shifts"],
+    )
+
+    affine = samseg.Affine(trans_scan_name, testaffinemesh_msh, testtemplate_nii)
+
+
+    (
+        image_to_image_transform,
+        optimization_summary,
+    ) = affine.registerAtlas(
+        savePath=tmppath,
+        worldToWorldTransformMatrix=None,
+        initTransform=None,
+        initializationOptions=init_options,
+        targetDownsampledVoxelSpacing=init_atlas_settings["downsampling_factor_affine"],
+        visualizer=visualizer,
+        Ks=[100]
+    )
+
+    print("Template registration summary.")
+    print(
+        "Number of Iterations: %d, Cost: %f\n"
+        % (optimization_summary["numberOfIterations"], optimization_summary["cost"])
+    )
 
     matrices = loadmat(os.path.join(tmppath, 'template_transforms.mat'))
     w2w = matrices['worldToWorldTransformMatrix']
@@ -192,20 +224,35 @@ def test_segmentation(tmppath, testcube_nii, testcubenoise_nii, testcubeatlas_pa
             "sharedGMMParameters": shared_gmm_params,
     }
 
-    visualizer = initVisualizer(False, False)
-    Samseg_utils._estimate_parameters(
-            str(seg_dir),
-            os.path.join(testcubeatlas_path, 'template.nii.gz'),
-            testcubeatlas_path,
-            [testcubenoise_nii],
-            seg_settings,
-            os.path.join(testcubeatlas_path, 'sharedGMMParameters.txt'),
-            visualizer,
-            user_optimization_options=user_opts,
-            user_model_specifications=user_specs)
+    samseg_kwargs = dict(
+        imageFileNames=[testcubenoise_nii],
+        atlasDir=testcubeatlas_path,
+        savePath=seg_dir,
+        imageToImageTransformMatrix=np.eye(4),  
+        userModelSpecifications=user_specs,
+        userOptimizationOptions=user_opts,
+        visualizer=initVisualizer(False, False),
+        saveHistory=False,
+        saveMesh=False,
+        savePosteriors=False,
+        saveWarp=False,
+    )
+
+    print("Starting segmentation.")
+    samsegment = samseg.Samseg(**samseg_kwargs)
+    samsegment.preProcess()
+    samsegment.fitModel()
+    samsegment.postProcess() 
+
+    # Print optimization summary
+    optimizationSummary = samsegment.optimizationSummary
+    for multiResolutionLevel, item in enumerate(optimizationSummary):
+        print(
+            "atlasRegistrationLevel%d %d %f\n"
+            % (multiResolutionLevel, item["numberOfIterations"], item["perVoxelCost"])
+        )
 
     seg = os.path.join(str(seg_dir), 'seg.mgz')
-
     orig_cube = sf.load_volume(testcube_nii)
     est_cube = sf.load_volume(seg)
     dice = _calc_dice(orig_cube.data==1, est_cube.data==1)
