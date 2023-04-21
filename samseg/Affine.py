@@ -14,7 +14,7 @@ from .figures import initVisualizer
 class initializationOptions:
     def __init__( self,
                   pitchAngles=np.array( [ 0 ] ) / 180.0 * np.pi, # in radians
-                  scales=[ 1.0 ],  
+                  scales=[ [1.0, 1.0, 1.0] ],  
                   horizontalTableShifts=[ 40.0, 20.0, 0.0, -20.0, -40.0 ], # in mm, in template space
                   verticalTableShifts=[ 0.0 ], # in mm, in template space
                   tryCenterOfGravity=True,
@@ -155,7 +155,7 @@ class Affine:
         return sf.Affine(vox2vox, space='vox', source=sf.load_volume(self.imageFileName), target=fsaorig)
 
     def getTransformMatrix( self, 
-                            pitchAngle=0.0, scale=1.0, horizontalTableShift=0.0, verticalTableShift=0.0,
+                            pitchAngle=0.0, scale=[1.0, 1.0, 1.0], horizontalTableShift=0.0, verticalTableShift=0.0,
                             initialTableShift=None ):
         #
         # 4x4 matrix simulating translation (horizontal and vertical table shift of the MRI scanner), 
@@ -174,9 +174,9 @@ class Affine:
         
         # Scaling
         scalingMatrix = np.identity( 4, dtype=np.double )
-        scalingMatrix[ 0, 0 ] = scale * self.initialScale
-        scalingMatrix[ 1, 1 ] = scale * self.initialScale
-        scalingMatrix[ 2, 2 ] = scale * self.initialScale
+        scalingMatrix[ 0, 0 ] = scale[0] * self.initialScale
+        scalingMatrix[ 1, 1 ] = scale[1] * self.initialScale
+        scalingMatrix[ 2, 2 ] = scale[2] * self.initialScale
         scalingCenter = np.array( [ self.scalingCenter[0], self.scalingCenter[1], self.scalingCenter[2], 
                                     1 ] ).reshape( -1, 1 )
         scalingCenter = translationMatrix @ scalingCenter
@@ -207,7 +207,7 @@ class Affine:
     def gridSearch( self, mesh,
                     positionsInTemplateSpace,
                     pitchAngles=[ 0.0 ],
-                    scales= [ 1.0 ],
+                    scales= [ [1.0, 1.0, 1.0] ],
                     horizontalTableShifts = [ 0.0 ],
                     verticalTableShifts = [ 0.0 ],
                     initialTableShifts=[ 0.0, 0.0, 0.0 ],
@@ -301,9 +301,9 @@ class Affine:
             templateSize = np.round( np.max( mesh.points, axis=0 ) + 1 ).astype( 'int' )
             priors = mesh.rasterize( templateSize, -1 )
             head = np.sum( priors[:,:,:,1:], axis=3 )
-            centerOfGravityTemplate = np.array( scipy.ndimage.measurements.center_of_mass( head ) ) # in image space
+            centerOfGravityTemplate = np.array( scipy.ndimage.center_of_mass( head ) ) # in image space
             centerOfGravityImage = np.array( 
-                scipy.ndimage.measurements.center_of_mass( self.image.getImageBuffer() ) ) # in image space
+                scipy.ndimage.center_of_mass( self.image.getImageBuffer() ) ) # in image space
             tmp = self.getTransformMatrix()
             tmp = tmp @ self.templateImageToWorldTransformMatrix
             centerOfGravityTemplate = tmp[ 0:3, 0:3 ] @ centerOfGravityTemplate + \

@@ -4,7 +4,7 @@ import logging
 import pickle
 import scipy.io
 import surfa as sf
-from scipy.ndimage.morphology import binary_dilation as dilation
+from scipy.ndimage import binary_dilation as dilation
 
 from samseg import gems
 from .utilities import Specification
