@@ -36,6 +36,12 @@ def testaffinemesh_msh():
     return fn
 
 @pytest.fixture(scope='module')
+def testaffine_mat():
+    fn = os.path.join(
+        SAMSEGDIR, '_internal_resources', 'testing_files', 'template_transforms.mat')
+    return fn
+
+@pytest.fixture(scope='module')
 def testcubenoise_nii():
     fn = os.path.join(
         SAMSEGDIR, '_internal_resources', 'testing_files', 'cube_noise.nii.gz')
@@ -108,19 +114,7 @@ def test_mni_affine(tmppath, testmni_nii):
                                RAS2LPS@estimated_trans_mat@RAS2LPS)
 
 
-def test_atlas_affine(tmppath, testmni_nii, testtemplate_nii, testaffinemesh_msh):
-    os.mkdir(os.path.join(tmppath, "shifted"))
-    trans_scan_name = os.path.join(tmppath, "shifted", "shifted_MNI.nii.gz")
-    template_coregistered_name = os.path.join(tmppath, 'template_coregistered.mgz')
-
-    input_scan = sf.load_volume(testmni_nii)
-    trans_mat = np.eye(4)
-    trans_mat[:3, 3] = -10
-    trans_affine = trans_mat @ input_scan.geom.vox2world
-    trans_mni = sf.Volume(input_scan)
-    trans_mni.geom.voxsize = input_scan.geom.voxsize
-    trans_mni.geom.vox2world = trans_affine
-    trans_mni.save(trans_scan_name)
+def test_atlas_affine(tmppath, testmni_nii, testtemplate_nii, testaffinemesh_msh, testaffine_mat):
 
     init_atlas_settings = {"affine_scales": [[1.0, 1.0, 1.0]],
                            "affine_rotations": [0],
@@ -138,8 +132,7 @@ def test_atlas_affine(tmppath, testmni_nii, testtemplate_nii, testaffinemesh_msh
         verticalTableShifts=init_atlas_settings["affine_vertical_shifts"],
     )
 
-    affine = samseg.Affine(trans_scan_name, testaffinemesh_msh, testtemplate_nii)
-
+    affine = samseg.Affine(testmni_nii, testaffinemesh_msh, testtemplate_nii)
 
     (
         image_to_image_transform,
@@ -160,13 +153,14 @@ def test_atlas_affine(tmppath, testmni_nii, testtemplate_nii, testaffinemesh_msh
         % (optimization_summary["numberOfIterations"], optimization_summary["cost"])
     )
 
+    # Load matrices that have been run with SAMSEG before and double-checked visually 
+    true_matrices = loadmat(testaffine_mat)
+    true_w2w = true_matrices['worldToWorldTransformMatrix']    
+
     matrices = loadmat(os.path.join(tmppath, 'template_transforms.mat'))
     w2w = matrices['worldToWorldTransformMatrix']
-    #I wouldn't expect the match to be as good as for the mni-mni reg above,
-    #so relaxing the tolerances here
-    np.testing.assert_allclose(trans_mat[:2,3],
-                               w2w[:2,3], rtol=5e-2, atol=1)
-    np.testing.assert_allclose(trans_mat[:3,:3], w2w[:3, :3], rtol=5e-2, atol=5e-2)
+
+    np.testing.assert_allclose(w2w, true_w2w)
 
 
 def test_coregistration(tmppath, testmni_nii):
