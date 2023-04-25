@@ -87,6 +87,7 @@ class SamsegLongitudinal:
         updateLatentMixtureWeights=True,
         updateLatentDeformation=True,
         initializeLatentDeformationToZero=False,
+        imageToImageTransformMatrix=None,
         threshold=None,
         thresholdSearchString=None,
         modeNames=None,
@@ -120,7 +121,14 @@ class SamsegLongitudinal:
             for tp, transform in enumerate(self.tpToBaseTransforms):
                 if not np.allclose(transform.matrix, np.eye(4)):
                     self.allIdentityTransforms = False
+        else:
+            self.tpToBaseTransforms = []
+            # If the trasnform are None, set them to identities
+            for tp in range(self.numberOfTimepoints):
+                 self.tpToBaseTransforms.append(np.eye(4))
 
+        # Set image-to-image matrix if provided
+        self.imageToImageTransformMatrix = imageToImageTransformMatrix
 
         # Initialize some objects
         self.probabilisticAtlas = ProbabilisticAtlas()
@@ -191,14 +199,16 @@ class SamsegLongitudinal:
         self.sstFileNames = self.generateSubjectSpecificTemplate()
         sstDir, _ = os.path.split(self.sstFileNames[0])
 
-        # Affine atlas registration to sst
-        templateFileName = os.path.join(self.atlasDir, 'template.nii.gz')
-        affineRegistrationMeshCollectionFileName = os.path.join(self.atlasDir, 'atlasForAffineRegistration.txt.gz')
+        if self.imageToImageTransformMatrix is None:
 
-        affine = Affine(imageFileName=self.sstFileNames[0],
-                         meshCollectionFileName=affineRegistrationMeshCollectionFileName,
-                         templateFileName=templateFileName)
-        self.imageToImageTransformMatrix, _ = affine.registerAtlas(savePath=sstDir, visualizer=self.visualizer)
+            # Affine atlas registration to sst
+            templateFileName = os.path.join(self.atlasDir, 'template.nii.gz')
+            affineRegistrationMeshCollectionFileName = os.path.join(self.atlasDir, 'atlasForAffineRegistration.txt.gz')
+
+            affine = Affine(imageFileName=self.sstFileNames[0],
+                             meshCollectionFileName=affineRegistrationMeshCollectionFileName,
+                             templateFileName=templateFileName)
+            self.imageToImageTransformMatrix, _ = affine.registerAtlas(savePath=sstDir, visualizer=self.visualizer)
 
 
     def preProcess(self):
@@ -822,12 +832,12 @@ class SamsegLongitudinal:
             # Read in the various time point images, and compute the average
             numberOfTimepoints = len(contrastImageFileNames)
             image0 = sf.load_volume(contrastImageFileNames[0])
-            imageBuffer = image0.transform(affine=self.tpToBaseTransforms[0])
+            imageBuffer = image0.transform(self.tpToBaseTransforms[0])
             # Make sure that we are averaging only non zero voxels
             count = np.zeros(imageBuffer.shape)
             count[imageBuffer > 0] += 1
             for timepointNumber in range(1, numberOfTimepoints):
-                tmp = sf.load_volume(contrastImageFileNames[timepointNumber]).transform(affine=self.tpToBaseTransforms[timepointNumber]).data
+                tmp = sf.load_volume(contrastImageFileNames[timepointNumber]).transform(self.tpToBaseTransforms[timepointNumber]).data
                 imageBuffer += tmp
                 count[tmp > 0] += 1
             # Make sure that we are not dividing by zero for, e.g., background voxels
