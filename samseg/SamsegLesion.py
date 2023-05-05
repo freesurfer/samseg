@@ -21,7 +21,7 @@ class SamsegLesion(Samseg):
                  numberOfSamplingSteps=50, numberOfBurnInSteps=50,
                  numberOfPseudoSamplesMean=500, numberOfPseudoSamplesVariance=500, rho=50,
                  intensityMaskingPattern=None, intensityMaskingSearchString='Cortex', gmmFileName=None, sampler=True,
-                 ignoreUnknownPriors=False, randomSeed=12345,
+                 ignoreUnknownPriors=False, randomSeed=12345, wmSearchString='White',
                  ):
         Samseg.__init__(self, imageFileNames, atlasDir, savePath, userModelSpecifications, userOptimizationOptions,
                  imageToImageTransformMatrix, visualizer, saveHistory, savePosteriors,
@@ -52,7 +52,6 @@ class SamsegLesion(Samseg):
 
         # Check conditions on white matter and lesion gaussian/structure and
         # get their structure numbers, class number as well as the gaussian number
-        wmSearchString = 'White'
         lesionSearchString = self.thresholdSearchString
         self.lesionStructureNumber, self.lesionClassNumber, self.lesionGaussianNumber = self.checkConditions(lesionSearchString)
         _, _, self.wmGaussianNumber = self.checkConditions(wmSearchString, checkStructureOwnClass=False)

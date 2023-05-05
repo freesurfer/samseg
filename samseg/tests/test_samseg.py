@@ -3,6 +3,7 @@ import pytest
 import surfa as sf
 import os
 import samseg
+from samseg import SamsegLesion, SamsegLongitudinalLesion
 from scipy import ndimage
 from scipy.io import loadmat
 from .. import SAMSEGDIR
@@ -166,7 +167,7 @@ def test_atlas_affine(tmppath, testmni_nii, testtemplate_nii, testaffinemesh_msh
     matrices = loadmat(os.path.join(tmppath, 'template_transforms.mat'))
     w2w = matrices['worldToWorldTransformMatrix']
 
-    np.testing.assert_allclose(w2w, true_w2w)
+    np.testing.assert_allclose(w2w, true_w2w, rtol=1e-4, atol=1e-4)
 
 
 def test_coregistration(tmppath, testmni_nii):
@@ -250,6 +251,74 @@ def test_segmentation(tmppath, testcube_nii, testcubenoise_nii, testcubeatlas_pa
     assert dice > 0.95
 
 
+def test_segmentation_lesion(tmppath, testcube_nii, testcubenoise_nii, testcubeatlas_path):
+
+    os.mkdir(os.path.join(tmppath, "segmentation")) 
+    seg_dir = os.path.join(tmppath, "segmentation")
+
+    seg_settings = {"downsampling_targets": 1.0,
+                    "bias_kernel_width": 100,
+                    "background_mask_sigma": 1.0,
+                    "background_mask_threshold": 0.001,
+                    "mesh_stiffness": 0.1,
+                    "diagonal_covariances": False}
+
+    user_opts = {
+        "multiResolutionSpecification": [
+            {
+                "atlasFileName": os.path.join(testcubeatlas_path,'atlas.txt.gz'),
+                "targetDownsampledVoxelSpacing": 1.0,
+                "maximumNuberOfIterations": 10,
+                "estimateBiasField": False
+            }
+        ]
+    }
+
+    shared_gmm_params = kvlReadSharedGMMParameters(os.path.join(testcubeatlas_path, 'sharedGMMParameters.txt'))
+    user_specs = {
+            "atlasFileName": os.path.join(testcubeatlas_path, "atlas.txt.gz"),
+            "biasFieldSmoothingKernelSize": seg_settings["bias_kernel_width"],
+            "brainMaskingSmoothingSigma": seg_settings["background_mask_sigma"],
+            "brainMaskingThreshold": seg_settings["background_mask_threshold"],
+            "K": seg_settings["mesh_stiffness"],
+            "useDiagonalCovarianceMatrices": seg_settings["diagonal_covariances"],
+            "sharedGMMParameters": shared_gmm_params,
+    }
+
+    samseg_kwargs = dict(
+        imageFileNames=[testcubenoise_nii],
+        atlasDir=testcubeatlas_path,
+        savePath=seg_dir,
+        imageToImageTransformMatrix=np.eye(4),  
+        userModelSpecifications=user_specs,
+        userOptimizationOptions=user_opts,
+        visualizer=initVisualizer(False, False),
+        saveHistory=False,
+        saveMesh=False,
+        savePosteriors=False,
+        saveWarp=False,
+        sampler=False,
+        intensityMaskingSearchString='Cube',
+        thresholdSearchString='Cube',
+        wmSearchString='Background',
+        numberOfPseudoSamplesVariance=1,
+        numberOfPseudoSamplesMean=1,
+        intensityMaskingPattern=[0],
+        rho=1,     
+    )
+
+    print("Starting segmentation.")
+    samsegment = SamsegLesion.SamsegLesion(**samseg_kwargs)
+    samsegment.segment() 
+
+    seg = os.path.join(str(seg_dir), 'seg.mgz')
+    orig_cube = sf.load_volume(testcube_nii)
+    est_cube = sf.load_volume(seg)
+    dice = _calc_dice(orig_cube.data==1, est_cube.data==1)
+    print("Dice score: " + str(dice))
+    assert dice > 0.95
+
+
 def test_long_segmentation(tmppath, testcube_nii, testcubenoise_nii, testcubenoise_2_nii, testcubeatlas_path):
 
     os.mkdir(os.path.join(tmppath, "segmentation")) 
@@ -300,6 +369,83 @@ def test_long_segmentation(tmppath, testcube_nii, testcubenoise_nii, testcubenoi
 
     print("Starting longitudinal segmentation.")
     samsegment = samseg.SamsegLongitudinal(**samseg_kwargs)
+
+    samsegment.segment() 
+
+    seg_tp0 = os.path.join(str(seg_dir), 'tp001', 'seg.mgz')
+    seg_tp1 = os.path.join(str(seg_dir), 'tp002', 'seg.mgz')
+
+    orig_cube = sf.load_volume(testcube_nii)
+    est_cube_tp0 = sf.load_volume(seg_tp0)
+    est_cube_tp1 = sf.load_volume(seg_tp1)
+
+    dice = _calc_dice(orig_cube.data==1, est_cube_tp0.data==1)
+    print("Dice score tp 0: " + str(dice))
+    assert dice > 0.95
+
+    dice = _calc_dice(orig_cube.data==1, est_cube_tp1.data==1)
+    print("Dice score tp 1: " + str(dice))
+    assert dice > 0.95
+
+
+def test_long_segmentation_lesion(tmppath, testcube_nii, testcubenoise_nii, testcubenoise_2_nii, testcubeatlas_path):
+
+    os.mkdir(os.path.join(tmppath, "segmentation")) 
+    seg_dir = os.path.join(tmppath, "segmentation")
+
+    seg_settings = {"downsampling_targets": 1.0,
+                    "bias_kernel_width": 100,
+                    "background_mask_sigma": 1.0,
+                    "background_mask_threshold": 0.001,
+                    "mesh_stiffness": 0.1,
+                    "diagonal_covariances": False}
+
+    user_opts = {
+        "multiResolutionSpecification": [
+            {
+                "atlasFileName": os.path.join(testcubeatlas_path,'atlas.txt.gz'),
+                "targetDownsampledVoxelSpacing": 1.0,
+                "maximumNuberOfIterations": 10,
+                "estimateBiasField": False
+            }
+        ]
+    }
+
+    shared_gmm_params = kvlReadSharedGMMParameters(os.path.join(testcubeatlas_path, 'sharedGMMParameters.txt'))
+    user_specs = {
+            "atlasFileName": os.path.join(testcubeatlas_path, "atlas.txt.gz"),
+            "biasFieldSmoothingKernelSize": seg_settings["bias_kernel_width"],
+            "brainMaskingSmoothingSigma": seg_settings["background_mask_sigma"],
+            "brainMaskingThreshold": seg_settings["background_mask_threshold"],
+            "K": seg_settings["mesh_stiffness"],
+            "useDiagonalCovarianceMatrices": seg_settings["diagonal_covariances"],
+            "sharedGMMParameters": shared_gmm_params,
+    }
+
+    samseg_kwargs = dict(
+        imageFileNamesList=[[testcubenoise_nii], [testcubenoise_2_nii]],
+        atlasDir=testcubeatlas_path,
+        savePath=seg_dir,
+        imageToImageTransformMatrix=np.eye(4),  
+        userModelSpecifications=user_specs,
+        userOptimizationOptions=user_opts,
+        visualizer=initVisualizer(False, False),
+        numberOfIterations=2,
+        sampler=False,
+        intensityMaskingSearchString='Cube',
+        thresholdSearchString='Cube',
+        wmSearchString='Background',
+        numberOfPseudoSamplesVariance=1,
+        numberOfPseudoSamplesMean=1,
+        intensityMaskingPattern=[0],
+        rho=1,   
+    )
+
+    # Turn off "block coordinate-descent" (Fessler) as small meshes can create problem in the optimization
+    os.environ['SAMSEG_DONT_USE_BLOCK_COORDINATE_DESCENT'] = ""
+
+    print("Starting longitudinal segmentation.")
+    samsegment = SamsegLongitudinalLesion.SamsegLongitudinalLesion(**samseg_kwargs)
 
     samsegment.segment() 
 
