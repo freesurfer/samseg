@@ -48,6 +48,7 @@ jobs:
         python -m pip install --user --upgrade setuptools wheel
         python setup.py bdist_wheel
         python -m pip install .\dist\samseg-0.2-cp36-cp36m-win_amd64.whl
+        cd ..
         python -c 'import samseg'
         rm samseg\gems\*.pyd
         rm samseg\gems\Release\*.pyd
@@ -80,7 +81,6 @@ jobs:
         python -m pip install --user --upgrade setuptools wheel
         python setup.py bdist_wheel
         python -m pip install samseg -f .\dist\
-        cd ..
         python -c 'import samseg'
         rm samseg\gems\*.pyd
         rm samseg\gems\Release\*.pyd
