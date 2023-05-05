@@ -80,6 +80,7 @@ jobs:
         python -m pip install --user --upgrade setuptools wheel
         python setup.py bdist_wheel
         python -m pip install samseg -f .\dist\
+        cd ..
         python -c 'import samseg'
         rm samseg\gems\*.pyd
         rm samseg\gems\Release\*.pyd
