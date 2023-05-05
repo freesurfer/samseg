@@ -51,7 +51,7 @@ jobs:
         cd ..
         python -c 'import samseg'
         rm samseg\gems\*.pyd
-        rm samseg\gems\Release\*
+        rm build\bdist.win-amd64\wheel\.\samseg\gems\*.pyd
       env:
         ZLIB_INCLUDE_DIR: .\zlib-install\include
         ZLIB_LIBRARY: .\zlib-install\lib\zlibstatic.lib
@@ -68,7 +68,7 @@ jobs:
         cd ..
         python -c 'import samseg'
         rm samseg\gems\*.pyd
-        rm samseg\gems\Release\*
+        rm build\bdist.win-amd64\wheel\.\samseg\gems\*.pyd
       env:
         ZLIB_INCLUDE_DIR: .\zlib-install\include
         ZLIB_LIBRARY: .\zlib-install\lib\zlibstatic.lib
@@ -85,7 +85,7 @@ jobs:
         cd ..
         python -c 'import samseg'
         rm samseg\gems\*.pyd
-        rm samseg\gems\Release\*
+        rm build\bdist.win-amd64\wheel\.\samseg\gems\*.pyd
       env:
         ZLIB_INCLUDE_DIR: .\zlib-install\include
         ZLIB_LIBRARY: .\zlib-install\lib\zlibstatic.lib
@@ -102,7 +102,7 @@ jobs:
         cd ..
         python -c 'import samseg'
         rm samseg\gems\*.pyd
-        rm samseg\gems\Release\*
+        rm build\bdist.win-amd64\wheel\.\samseg\gems\*.pyd
       env:
         ZLIB_INCLUDE_DIR: .\zlib-install\include
         ZLIB_LIBRARY: .\zlib-install\lib\zlibstatic.lib
