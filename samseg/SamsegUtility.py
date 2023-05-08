@@ -7,13 +7,13 @@ import shutil
 
 from samseg import gems
 from .utilities import icv
-from .io import kvlReadCompressionLookupTable, kvlReadSharedGMMParameters, kvlWriteCompressionLookupTable
+from .io import kvlReadCompressionLookupTable, kvlReadSharedGMMParameters, kvlWriteCompressionLookupTable, kvlReadTiedGMMParameters
 from .figures import initVisualizer
 from .utilities import requireNumpyArray
 
 eps = np.finfo(float).eps
 
-def getModelSpecifications(atlasDir, userModelSpecifications={}, pallidumAsWM=True, gmmFileName=None):
+def getModelSpecifications(atlasDir, userModelSpecifications={}, pallidumAsWM=True, gmmFileName=None, tiedGMMFileName=None, contrastNames=None):
 
     # Create default model specifications as a dictionary
     FreeSurferLabels, names, colors = kvlReadCompressionLookupTable(os.path.join(atlasDir, 'compressionLookupTable.txt'))
@@ -45,12 +45,68 @@ def getModelSpecifications(atlasDir, userModelSpecifications={}, pallidumAsWM=Tr
             sharedGMMParameters[globalWMGMMNumber].searchStrings.append('Pallidum')
             sharedGMMParameters.pop(pallidumGMMNumber)
 
+    # Read tiedGMMFileName if provided
+    if tiedGMMFileName:
+        tiedGMMParametersFromFile = kvlReadTiedGMMParameters(tiedGMMFileName)
+        numberOfContrasts = len(contrastNames)
+        
+        # Keep track of merged names and their associated Gaussian number
+        numberOfGaussiansPerClass = [param.numberOfComponents for param in sharedGMMParameters]
+        mergedNames = [param.mergedName for param in sharedGMMParameters]
+        # 
+        tiedGMMParameters = []
+        mergedNames1 = list(set([param.mergedName1 for param in tiedGMMParametersFromFile]))  # Only unique names for Gauss 1
+        gaussNumbers1 = [np.sum(numberOfGaussiansPerClass[:mergedNames.index(mergedName1)]) for mergedName1 in mergedNames1] # Gauss number for all unique names for Gauss 1
+        alreadyDone1 = []
+        alreadyDone2 = []
+        for tiedGMMParameter in tiedGMMParametersFromFile:
+            gaussNumber1 = np.sum(numberOfGaussiansPerClass[:mergedNames.index(tiedGMMParameter.mergedName1)]) + int(tiedGMMParameter.gaussNumber1)
+
+            if gaussNumber1 in alreadyDone1:
+                continue
+
+            tiedGMMParameters2 = []
+
+            for tiedGMMParameter2 in tiedGMMParametersFromFile:
+
+                if tiedGMMParameter2.mergedName1 != tiedGMMParameter.mergedName1:
+                    continue
+
+                gaussNumber2 = np.sum(numberOfGaussiansPerClass[:mergedNames.index(tiedGMMParameter2.mergedName2)]) + int(tiedGMMParameter2.gaussNumber2)
+
+                if gaussNumber2 in alreadyDone2:
+                    continue
+
+                kappas = np.zeros(numberOfContrasts)
+                lams = np.zeros(numberOfContrasts)
+                PMeans = np.zeros(numberOfContrasts)
+                PVariances = np.zeros(numberOfContrasts)
+                for c, contrast in enumerate(contrastNames):
+                    for tiedGMMParameters3 in tiedGMMParametersFromFile:
+                        if tiedGMMParameters3.mergedName1 == tiedGMMParameter2.mergedName1 and tiedGMMParameters3.mergedName2 == tiedGMMParameter2.mergedName2:
+                            if tiedGMMParameters3.contrastName == contrast:
+                               kappas[c] = tiedGMMParameters3.kappa
+                               lams[c] = tiedGMMParameters3.lam
+                               PMeans[c] = tiedGMMParameters3.PMean
+                               PVariances[c] = tiedGMMParameters3.PVariance
+
+                tiedGMMParameters2.append([gaussNumber2, kappas, lams, PMeans, PVariances])
+
+                alreadyDone2.append(gaussNumber2)
+
+            tiedGMMParameters.append([gaussNumber1, tiedGMMParameters2])
+            alreadyDone1.append(gaussNumber1)
+
+    else:
+        tiedGMMParameters = None   
+
     modelSpecifications = {
         'FreeSurferLabels': FreeSurferLabels,
         'atlasFileName': os.path.join(atlasDir, 'atlas_level2.txt.gz'),
         'names': names,
         'colors': colors,
         'sharedGMMParameters': sharedGMMParameters,
+        'tiedGMMParameters': tiedGMMParameters, 
         'useDiagonalCovarianceMatrices': True,
         'maskingProbabilityThreshold': 0.5, # threshold on probability of background
         'maskingDistance': 10.0, # distance in mm of how far into background the mask goes out
@@ -391,7 +447,7 @@ class Timer:
         print('%s: %s' % (message, str(self.elapsed)))
 
 
-def createLesionAtlas(samseg_atlas_dir, lesion_components_dir, output_dir):
+def createLesionAtlas(samseg_atlas_dir, lesion_components_dir, output_dir, lesionPriorScaling=1.0):
 
     # Create lesion atlas directory from samseg atlas dir and lesion components (VAE and lesion alphas)
     # Load lesion alphas
@@ -442,6 +498,10 @@ def createLesionAtlas(samseg_atlas_dir, lesion_components_dir, output_dir):
 
         # Now add estimated alphas
         estimated_alphas = lesion_alphas["lesion_alphas_level_" + str(level + 1) + ".npy"]
+
+        # Scale estimated alphas. Clip to [0, 1] range
+        estimated_alphas = np.clip(estimated_alphas * lesionPriorScaling, a_min=0.0, a_max=1.0)
+
         new_alphas = np.zeros([alphas.shape[0], alphas.shape[1] + len(new_classes)])
         compressed_labels = np.arange(0, alphas.shape[1])
         new_alphas[:, compressed_labels] = (1 - estimated_alphas[:, None]) * alphas

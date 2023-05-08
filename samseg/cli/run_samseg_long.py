@@ -22,11 +22,14 @@ def parseArguments(argv):
     parser.add_argument('-o', '--output', required=True, help='Output directory.')
     # optional lesion options
     parser.add_argument('--lesion', action='store_true', default=False, help='Enable lesion segmentation (requires tensorflow).')
-    parser.add_argument('--threshold', type=float, default=0.3, help='Lesion threshold for final segmentation. Lesion segmentation must be enabled.')
+    parser.add_argument('--lesion-type', help='Lesion type: "MS" (Multiple Sclerosis) or "Leuko" (Leukoaraiosis).') 
+    parser.add_argument('--lesion-prior-scaling', type=float, default=1.0, help='Scaling factor of lesion prior. Lesion segmentation must be enabled.')
     parser.add_argument('--samples', type=int, default=50, help='Number of samples for lesion segmentation. Lesion segmentation must be enabled.')
     parser.add_argument('--burnin', type=int, default=50, help='Number of burn-in samples for lesion segmentation. Lesion segmentation must be enabled.')
     parser.add_argument('--lesion-mask-structure', default='Cortex', help='Intensity mask brain structure. Lesion segmentation must be enabled.')
     parser.add_argument('--lesion-mask-pattern', type=int, nargs='+', help='Lesion mask list (set value for each input volume): -1 below lesion mask structure mean, +1 above, 0 no mask. Lesion segmentation must be enabled.')
+    parser.add_argument('--alpha', type=float, default=1.0, help='Lesion location prior strength.')
+    parser.add_argument('--do-not-sample', action='store_true', default=False, help='Do not sample (i.e., no VAE is used).')    
     # optional processing options
     parser.add_argument('-m', '--mode', nargs='+', help='Output basenames for the input image mode.')
     parser.add_argument('-a', '--atlas', metavar='DIR', help='Point to an alternative atlas directory.')
@@ -36,6 +39,8 @@ def parseArguments(argv):
     parser.add_argument('--threads', type=int, default=default_threads, help='Number of threads to use. Defaults to current OMP_NUM_THREADS or 1.')
     parser.add_argument('--tp-to-base-transform', nargs='+', required=False, help='Transformation file for each time point to base.')
     parser.add_argument('--force-different-resolutions', action='store_true', default=False, help='Force run even if time points have different resolutions.')
+    parser.add_argument('--tied-gmm', metavar='FILE', help='Point to tied GMM file.')
+    parser.add_argument('--contrast-names', nargs='+', help='Name of the input contrasts. Need to match the ones in --tied-gmm file provided.')
     # optional debugging options
     parser.add_argument('--history', action='store_true', default=False, help='Save history.')
     parser.add_argument('--save-posteriors', nargs='*', help='Save posterior volumes to the "posteriors" subdirectory.')
@@ -74,19 +79,30 @@ def main():
     # Specify the maximum number of threads the GEMS code will use
     samseg.gems.setGlobalDefaultNumberOfThreads(args.threads)
 
+    #
+    tiedGMMFileName = args.tied_gmm
+
     # Get the atlas directory
     if args.atlas:
         atlasDir = args.atlas
     else:
         # Atlas defaults
         if args.lesion:
+
+            # 
+            lesion_type = args.lesion_type
+            if lesion_type is None and lesion_type != 'MS' and lesion_type != 'Leuko':
+                sf.system.fatal('Lesion type is either not defined, or not "MS" or "Leuko".')            
+
             from samseg.SamsegUtility import createLesionAtlas
             # Create lesion atlas on the fly, use output directory as temporary folder
-            os.makedirs(os.path.join(args.output, 'lesion_atlas'), exist_ok=True)
-            atlasDir = os.path.join(args.output, 'lesion_atlas')
+            os.makedirs(os.path.join(args.outputDirectory, 'lesion_atlas'), exist_ok=True)
+            atlasDir = os.path.join(args.outputDirectory, 'lesion_atlas')
             createLesionAtlas(os.path.join(SAMSEGDIR, 'atlas', '20Subjects_smoothing2_down2_smoothingForAffine2'),
-                              os.path.join(SAMSEGDIR, 'atlas', 'Lesion_Components'),
-                              atlasDir)
+                              os.path.join(SAMSEGDIR, 'atlas', 'Lesion_Components', str(lesion_type)),
+                              atlasDir, lesionPriorScaling=args.lesion_prior_scaling)
+            if tiedGMMFileName is None:
+                tiedGMMFileName = os.path.join(SAMSEGDIR, 'atlas', 'Lesion_Components', str(lesion_type), 'tiedGMMParameters.txt')
         else:
             atlasDir = os.path.join(SAMSEGDIR, 'atlas', '20Subjects_smoothing2_down2_smoothingForAffine2')
 
@@ -131,6 +147,8 @@ def main():
         saveHistory=args.history,
         visualizer=visualizer,
         tpToBaseTransforms=tpToBaseTransforms,
+        tiedGMMFileName=tiedGMMFileName,
+        contrastNames=args.contrast_names,
     )
 
     if args.lesion:
@@ -148,7 +166,6 @@ def main():
             intensityMaskingPattern=lesion_mask_pattern,
             numberOfBurnInSteps=args.burnin,
             numberOfSamplingSteps=args.samples,
-            threshold=args.threshold
         )
 
     else:

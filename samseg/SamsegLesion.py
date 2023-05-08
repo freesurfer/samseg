@@ -1,5 +1,6 @@
 import numpy as np
 import os
+from scipy.ndimage.interpolation import affine_transform
 
 from samseg import gems
 from .Samseg import Samseg
@@ -15,27 +16,27 @@ eps = np.finfo(float).eps
 class SamsegLesion(Samseg):
     def __init__(self, imageFileNames, atlasDir, savePath, userModelSpecifications={}, userOptimizationOptions={},
                  imageToImageTransformMatrix=None, visualizer=None, saveHistory=None, savePosteriors=None,
-                 saveWarp=None, saveMesh=None, threshold=0.3, thresholdSearchString='Lesion',
+                 saveWarp=None, saveMesh=None,
                  targetIntensity=None, targetSearchStrings=None, modeNames=None, pallidumAsWM=True,
                  saveModelProbabilities=False,
                  numberOfSamplingSteps=50, numberOfBurnInSteps=50,
-                 numberOfPseudoSamplesMean=500, numberOfPseudoSamplesVariance=500, rho=50,
-                 intensityMaskingPattern=None, intensityMaskingSearchString='Cortex', gmmFileName=None, sampler=True,
-                 ignoreUnknownPriors=False, randomSeed=12345,
+                 intensityMaskingPattern=None, intensityMaskingSearchString='Cortex', gmmFileName=None,
+                 tiedGMMFileName=None, contrastNames=None, sampler=True,
+                 ignoreUnknownPriors=False, randomSeed=12345, alpha=1.0
                  ):
         Samseg.__init__(self, imageFileNames, atlasDir, savePath, userModelSpecifications, userOptimizationOptions,
                  imageToImageTransformMatrix, visualizer, saveHistory, savePosteriors,
-                 saveWarp, saveMesh, threshold, thresholdSearchString,
+                 saveWarp, saveMesh,
                  targetIntensity, targetSearchStrings, modeNames, pallidumAsWM=pallidumAsWM,
                  saveModelProbabilities=saveModelProbabilities, gmmFileName=gmmFileName,
+                 tiedGMMFileName=tiedGMMFileName, contrastNames=contrastNames,
                  ignoreUnknownPriors=ignoreUnknownPriors)
+
         self.numberOfSamplingSteps = numberOfSamplingSteps
         self.numberOfBurnInSteps = numberOfBurnInSteps
-        self.numberOfPseudoSamplesMean = numberOfPseudoSamplesMean
-        self.numberOfPseudoSamplesVariance = numberOfPseudoSamplesVariance
-        self.rho = rho
         self.intensityMaskingClassNumber = self.getClassNumber(intensityMaskingSearchString)
         self.sampler = sampler
+        self.alpha = alpha
 
         # Set random seed 
         self.seed = randomSeed
@@ -53,7 +54,7 @@ class SamsegLesion(Samseg):
         # Check conditions on white matter and lesion gaussian/structure and
         # get their structure numbers, class number as well as the gaussian number
         wmSearchString = 'White'
-        lesionSearchString = self.thresholdSearchString
+        lesionSearchString = 'Lesion'
         self.lesionStructureNumber, self.lesionClassNumber, self.lesionGaussianNumber = self.checkConditions(lesionSearchString)
         _, _, self.wmGaussianNumber = self.checkConditions(wmSearchString, checkStructureOwnClass=False)
 
@@ -73,6 +74,7 @@ class SamsegLesion(Samseg):
             raise RuntimeError('Could not find "%s" in model. Make sure you are using the correct atlas' % structureSearchString)
 
         return structureClassNumber
+
 
     def checkConditions(self, searchString, checkStructureOwnClass=True):
 
@@ -101,12 +103,6 @@ class SamsegLesion(Samseg):
 
         return structureNumbers[0], classNumber, gaussianNumbers[0]
 
-    def initializeGMM(self):
-        Samseg.initializeGMM(self)
-        # Here we tied the lesion gaussian to the wm one
-        self.gmm.fullHyperMeansNumberOfMeasurements[self.lesionGaussianNumber] = self.numberOfPseudoSamplesMean
-        self.gmm.fullHyperVariancesNumberOfMeasurements[self.lesionGaussianNumber] = self.numberOfPseudoSamplesVariance
-        self.gmm.tiedGaussiansInit(self.wmGaussianNumber, self.lesionGaussianNumber, self.rho)
 
     def computeFinalSegmentation(self):
 
@@ -170,8 +166,28 @@ class SamsegLesion(Samseg):
         self.visualizer.show(image_list=[lesion], title="Initial lesion segmentation")
 
         # Initialize the VAE tensorflow model and its various settings.
-        # Restore from checkpoint the VAE
-        vae = VAE(self.atlasDir, self.transform, imageSize, self.seed)
+        vaeInfo = np.load(os.path.join(self.atlasDir, "VAE", "VAE_info.npz"))
+        trainToAtlasTransform = vaeInfo['train_to_atlas_transform']
+
+        # Load trained VAE 
+        vae = VAE(width=vaeInfo['width'], height=vaeInfo['height'], depth=vaeInfo['depth'], alpha=self.alpha,
+                  use_spatial_weights=True)
+        vae.build = True
+        vae._is_graph_network = True
+        vae.encode(x=np.zeros([1, vaeInfo['width'], vaeInfo['height'], vaeInfo['depth'], 1]))
+        vae.load_weights(os.path.join(self.atlasDir, "VAE", "model.h5"))
+
+        # Combination of transformation matrices in order to obtain a subject to VAE train space transformation
+        # First from subject space to template space, then from template space to VAE train space
+        # When combining transformations the order of the transformations is from right to left.
+        trainToSubjectTransform = self.transform.as_numpy_array @ trainToAtlasTransform
+
+        # Rasterize lesion probability in atlas    
+        tmp = np.zeros(imageSize)
+        tmp[self.mask] = priors[:, self.lesionStructureNumber]    
+        # Transform lesion probability to VAE training space        
+        spatial_weights = affine_transform(tmp, trainToSubjectTransform, output_shape=(vae.width, vae.height, vae.depth), order=1)
+        spatial_weights = np.expand_dims(np.expand_dims(spatial_weights, 0), 4)
 
         # Do the actual sampling of lesion, latent variables of the VAE model, and mean/variance of the lesion intensity model.
         averagePosteriors = np.zeros(posteriors.shape[0])
@@ -182,7 +198,7 @@ class SamsegLesion(Samseg):
             # Sample from the VAE latent variables, conditioned on the current lesion segmentation.
             # Implementation-wise we don't store the latent variables, but rather the factorized
             # prior in the visible units (voxels) that they encode.
-            lesionPriorVAE = (vae.sample(lesion) * intensityMask)[self.mask]
+            priorLes = (self.sample(vae, lesion, trainToSubjectTransform, spatial_weights) * intensityMask)[self.mask]
 
             if hasattr(self.visualizer, 'show_flag'):
                 tmp = np.zeros(imageSize)
@@ -198,7 +214,6 @@ class SamsegLesion(Samseg):
             # (Implementation-wise the latter is encoded in the VAE prior). At the same time we also
             # compute the full posterior of each structure, which is at the end the thing we're averaging
             # over (i.e., the reason why we're sampling)
-            priorLes = lesionPriorVAE * priors[:, self.lesionStructureNumber]
             if hasattr(self.visualizer, 'show_flag'):
                 tmp = np.zeros(imageSize)
                 tmp[self.mask] = effectivePriors[:, self.lesionStructureNumber]
@@ -233,3 +248,29 @@ class SamsegLesion(Samseg):
 
         # Return
         return posteriors, biasFields, nodePositions, data, priors
+
+
+    def sample(self, vae, lesion, trainToSubjectTransform, spatial_weights=None):
+
+        # We first go from subject space to train space of the VAE
+        # Since we are using scipy affine transform that takes an INVERSE transformation
+        # we pass to the function the inverse of subjectToTrainMat, so trainToSubjectMat
+        lesionTrainSpace = affine_transform(lesion, trainToSubjectTransform,
+                                            output_shape=(vae.width, vae.height, vae.depth), order=1)
+
+        #
+        inputTrainSpace = np.zeros([1, vae.width, vae.height, vae.depth, 1])
+        inputTrainSpace[0, :, :, :, 0] = lesionTrainSpace
+
+        # We go through the VAE to get the factorized prior
+        mean, logvar = vae.encode(inputTrainSpace)
+        z = vae.reparameterize(mean, logvar, seed=self.seed)
+        lesionVAETrainSpace = vae.decode(z, spatial_weights=spatial_weights).numpy()[0, :, :, :, 0]
+
+        # We then go back to subject space from train space
+        # Also here, since we are using scipy affine transform that takes an INVERSE transformation
+        # we pass to the function the inverse of trainToSubjectMat, so subjectToTrainMat
+        lesionPriorVAE = affine_transform(lesionVAETrainSpace, np.linalg.inv(trainToSubjectTransform),
+                                          output_shape=lesion.shape, order=1)
+
+        return lesionPriorVAE

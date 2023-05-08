@@ -3,7 +3,7 @@ from collections import namedtuple
 
 
 GMMparameter = namedtuple('GMMparameter', 'mergedName numberOfComponents searchStrings')
-
+tiedGMMparameter = namedtuple('tiedGMMparameter', 'mergedName1 gaussNumber1 mergedName2 gaussNumber2 contrastName kappa lam PMean PVariance')
 
 def kvlReadSharedGMMParameters(fileName):
     # Read text file where each line is formatted as:
@@ -33,6 +33,29 @@ def kvlWriteSharedGMMParameters( sharedGMMParameters, fileName ):
         for GMMparameter in sharedGMMParameters:
             print( GMMparameter.mergedName, GMMparameter.numberOfComponents, 
                   *GMMparameter.searchStrings, file=fid )
+
+
+def kvlReadTiedGMMParameters(fileName):
+    # Read text file where each line is formatted as:
+    # mergedName1 gaussNumber1 mergedName2 gaussNumber2 contrastName kappa lambda PMean PVariance 
+    tiedGMMParameters = []
+    with open(fileName) as fid:
+        for textLine in fid.readlines():
+            # Remove leading and trailing blanks
+            components = textLine.strip().split()
+            if len(components) > 0 and components[0] != '#':
+                mergedName1 = components[0]
+                gaussNumber1 = components[1]
+                mergedName2 = components[2]
+                gaussNumber2 = components[3]
+                contrastName = components[4]
+                kappa = float(components[5])
+                lam = float(components[6])
+                PMean = float(components[7])
+                PVariance = float(components[8])
+                # Add to tiedGMMParameters structure array
+                tiedGMMParameters.append(tiedGMMparameter(mergedName1, gaussNumber1, mergedName2, gaussNumber2, contrastName, kappa, lam, PMean, PVariance))
+    return tiedGMMParameters
 
 
 def kvlReadCompressionLookupTable(fileName):

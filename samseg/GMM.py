@@ -10,7 +10,8 @@ class GMM:
                  initialMixtureWeights=None,
                  initialHyperMeans=None, initialHyperMeansNumberOfMeasurements=None, initialHyperVariances=None,
                  initialHyperVariancesNumberOfMeasurements=None, initialHyperMixtureWeights=None,
-                 initialHyperMixtureWeightsNumberOfMeasurements=None ):
+                 initialHyperMixtureWeightsNumberOfMeasurements=None,
+                 tiedGMMParameters=None):
         #
         self.numberOfGaussiansPerClass = numberOfGaussiansPerClass
         self.numberOfClasses = len(self.numberOfGaussiansPerClass)
@@ -68,6 +69,60 @@ class GMM:
         threshold = (self.numberOfContrasts - 2) + 1 + eps
         self.fullHyperVariancesNumberOfMeasurements[self.fullHyperVariancesNumberOfMeasurements < threshold] = threshold
 
+        # Tying Gaussian options
+        if tiedGMMParameters:
+            # Tied gaussian 2 to gaussian 1:
+            # A priori we expect the following:
+            # mean_2 = mean_1 + lam * sqrt(variance_1)
+            # sqrt(variance_2) = kappa * sqrt(variance_1)
+            # lam indicates shift factor measured in std deviations
+            # kappa indicates outlier factor measured in std deviations
+            # Since updates for means and variances depend on each other, multiple iteration might be needed
+            print("Tying Gaussians...")
+            self.tied = True
+            self.gaussNumbers1Tied = []
+            self.gaussNumbers2Tied = []
+            self.kappas = []
+            self.lams = []
+            pseudoMeans = [] # TODO: use pseudo samples that might differ from each contrast?
+            pseudoVariances = [] # TODO: use pseudo samples that might differ from each contrast?
+            for tiedGMMParameter in tiedGMMParameters:
+                self.gaussNumbers1Tied.append(tiedGMMParameter[0])
+                tmp_gaussNumbers2Tied = []
+                tmp_kappas = []
+                tmp_lams = []
+                tmp_pseudoMeans = []
+                tmp_pseudoVariances = []        
+                for tiedGMMParameter1 in tiedGMMParameter[1]:
+                    tmp_gaussNumbers2Tied.append(tiedGMMParameter1[0])
+                    tmp_kappas.append(tiedGMMParameter1[1])
+                    tmp_lams.append(tiedGMMParameter1[2])
+                    tmp_pseudoMeans.append(tiedGMMParameter1[3][0])
+                    tmp_pseudoVariances.append(tiedGMMParameter1[4][0])
+
+                self.gaussNumbers2Tied.append(tmp_gaussNumbers2Tied)
+                self.kappas.append(tmp_kappas)
+                self.lams.append(tmp_lams)
+                pseudoMeans.append(tmp_pseudoMeans)
+                pseudoVariances.append(tmp_pseudoVariances)
+                
+                self.fullHyperMeansNumberOfMeasurements[tmp_gaussNumbers2Tied] = tmp_pseudoMeans
+                self.fullHyperVariancesNumberOfMeasurements[tmp_gaussNumbers2Tied] = tmp_pseudoVariances
+                                
+            print("gaussNumbers1Tied: " + str(self.gaussNumbers1Tied))
+            print("gaussNumbers2Tied: " + str(self.gaussNumbers2Tied))
+            print("kappas: " + str(self.kappas))
+            print("lams: " + str(self.lams))
+            print("PseudoMeans: " + str(pseudoMeans))
+            print("PseudoVariances: " + str(pseudoVariances))
+
+            # TODO: Expose this to the user?
+            self.innerIterations = 1
+        else:
+            self.tied = False
+            self.gaussNumbers1Tied = []
+            self.gaussNumbers2Tied = [[]]
+
         self.hyperMeansNumberOfMeasurements = self.fullHyperMeansNumberOfMeasurements.copy()
         self.hyperVariancesNumberOfMeasurements = self.fullHyperVariancesNumberOfMeasurements.copy()
         self.hyperMixtureWeightsNumberOfMeasurements = self.fullHyperMixtureWeightsNumberOfMeasurements.copy()
@@ -108,6 +163,13 @@ class GMM:
 
         if self.tied:
             self.previousVariances = self.variances.copy()
+            for g1, gaussNumber1Tied in enumerate(self.gaussNumbers1Tied): 
+                lams = self.lams[g1]
+                kappas = self.kappas[g1]
+                for g2, gaussNumber2Tied in enumerate(self.gaussNumbers2Tied[g1]):
+                    for contrast in range(self.numberOfContrasts):   
+                        self.hyperMeans[gaussNumber2Tied, contrast] = self.means[gaussNumber1Tied, contrast] + lams[g2][contrast] * np.sqrt(self.variances[gaussNumber1Tied, contrast, contrast])
+                        self.hyperVariances[gaussNumber2Tied, contrast, contrast] = kappas[g2][contrast] * self.variances[gaussNumber1Tied, contrast, contrast] 
 
     def getGaussianLikelihoods(self, data, mean, variance):
 
@@ -245,6 +307,10 @@ class GMM:
 
         # Means and variances
         for gaussianNumber in range(self.numberOfGaussians):
+
+            if self.tied and gaussianNumber in self.gaussNumbers1Tied or any(gaussianNumber in gaussNumber2Tied for gaussNumber2Tied in self.gaussNumbers2Tied):
+                continue
+
             posterior = gaussianPosteriors[:, gaussianNumber].reshape(-1, 1)
             hyperMean = np.expand_dims(self.hyperMeans[gaussianNumber, :], 1)
             hyperMeanNumberOfMeasurements = self.hyperMeansNumberOfMeasurements[gaussianNumber]
@@ -283,6 +349,10 @@ class GMM:
         #
         minLogPrior = 0
         for gaussianNumber in range(self.numberOfGaussians):
+
+            if self.tied and gaussianNumber in self.gaussNumbers1Tied or any(gaussianNumber in gaussNumber2Tied for gaussNumber2Tied in self.gaussNumbers2Tied):
+                continue
+
             mean = np.expand_dims(self.means[gaussianNumber, :], 1)
             variance = self.variances[gaussianNumber, :, :]
 
@@ -324,6 +394,32 @@ class GMM:
                 minLogPrior += hyperMixtureWeightNumberOfMeasurements * \
                                hyperMixtureWeight * (np.log(hyperMixtureWeight + eps) - np.log(mixtureWeight + eps))
 
+        # Tying cost 
+        # Gauss 1
+        for g1, gaussNumber1Tied in enumerate(self.gaussNumbers1Tied):
+            hyperMean_1 = np.expand_dims(self.hyperMeans[gaussNumber1Tied, :], 1)
+            hyperMeanNumberOfMeasurements_1 = self.hyperMeansNumberOfMeasurements[gaussNumber1Tied]
+            hyperVariance_1 = self.hyperVariances[gaussNumber1Tied, :, :]
+            hyperVarianceNumberOfMeasurements_1 = self.hyperVariancesNumberOfMeasurements[gaussNumber1Tied]
+
+            for contrast in range(self.numberOfContrasts):
+                minLogPrior += hyperMeanNumberOfMeasurements_1 / 2 * (hyperMean_1[contrast, 0] - self.means[gaussNumber1Tied, contrast])**2 / self.variances[gaussNumber1Tied, contrast, contrast]
+                minLogPrior += hyperVarianceNumberOfMeasurements_1 / 2 * (np.log(self.variances[gaussNumber1Tied, contrast, contrast]) + hyperVariance_1[contrast, contrast] / self.variances[gaussNumber1Tied, contrast, contrast])
+
+            # Gauss 2
+            for gaussNumber2Tied in self.gaussNumbers2Tied[g1]:
+                hyperMean_2 = np.expand_dims(self.hyperMeans[gaussNumber2Tied, :], 1)
+                hyperMeanNumberOfMeasurements_2 = self.hyperMeansNumberOfMeasurements[gaussNumber2Tied]
+                hyperVariance_2 = self.hyperVariances[gaussNumber2Tied, :, :]
+                hyperVarianceNumberOfMeasurements_2 = self.hyperVariancesNumberOfMeasurements[gaussNumber2Tied]
+
+                for contrast in range(self.numberOfContrasts):
+
+                    minLogPrior += hyperMeanNumberOfMeasurements_2 / 2 * (hyperMean_2[contrast, 0] - self.means[gaussNumber2Tied, contrast])**2 / self.variances[gaussNumber2Tied, contrast, contrast]
+                    minLogPrior += hyperVarianceNumberOfMeasurements_2 / 2 * (np.log(self.variances[gaussNumber2Tied, contrast, contrast]) + hyperVariance_2[contrast, contrast] / self.variances[gaussNumber2Tied, contrast, contrast])
+                    # Extra term (not constant anymore!)
+                    minLogPrior += - (hyperVarianceNumberOfMeasurements_2 - 3) / 2 * np.log(hyperVariance_2[contrast, contrast])
+
         #
         return minLogPrior
 
@@ -332,13 +428,6 @@ class GMM:
         self.hyperVariancesNumberOfMeasurements = self.fullHyperVariancesNumberOfMeasurements / np.prod(downSamplingFactors)
         self.hyperMixtureWeightsNumberOfMeasurements = self.fullHyperMixtureWeightsNumberOfMeasurements / np.prod(downSamplingFactors)
 
-    # Tied gaussian 2 to gaussian 1 (rho indicates outlier factor measured in std deviations)
-    # Note that this implementation works only if the classes have only one single component
-    def tiedGaussiansInit(self, gaussNumber1, gaussNumber2, rho):
-        self.tied = True
-        self.gaussNumber1Tied = gaussNumber1
-        self.gaussNumber2Tied = gaussNumber2
-        self.rho = rho
 
     def tiedGaussiansFit(self, data, gaussianPosteriors):
 
@@ -346,63 +435,107 @@ class GMM:
             self.previousVariances = self.variances.copy()
             return
 
-        posterior_1 = gaussianPosteriors[:, self.gaussNumber1Tied].reshape(-1, 1)
-        hyperMean_1 = np.expand_dims(self.hyperMeans[self.gaussNumber1Tied, :], 1)
-        hyperMeanNumberOfMeasurements_1 = self.hyperMeansNumberOfMeasurements[self.gaussNumber1Tied]
-        hyperVariance_1 = self.hyperVariances[self.gaussNumber1Tied, :, :]
-        hyperVarianceNumberOfMeasurements_1 = self.hyperVariancesNumberOfMeasurements[self.gaussNumber1Tied]
-        variance_1_previous = self.previousVariances[self.gaussNumber1Tied]
+        for g1, gaussNumber1Tied in enumerate(self.gaussNumbers1Tied):
 
-        posterior_2 = gaussianPosteriors[:, self.gaussNumber2Tied].reshape(-1, 1)
-        hyperMean_2 = np.expand_dims(self.hyperMeans[self.gaussNumber2Tied, :], 1)
-        hyperMeanNumberOfMeasurements_2 = self.hyperMeansNumberOfMeasurements[self.gaussNumber2Tied]
-        hyperVariance_2 = self.hyperVariances[self.gaussNumber2Tied, :, :]
-        hyperVarianceNumberOfMeasurements_2 = self.hyperVariancesNumberOfMeasurements[self.gaussNumber2Tied]
-        variance_2_previous = self.previousVariances[self.gaussNumber2Tied]
+            gaussNumbers2Tied = self.gaussNumbers2Tied[g1]
+            numberOfGauss2Tied = len(gaussNumbers2Tied)
 
-        # Define some temporary variables
-        soft_sum_1 = np.sum(posterior_1)
-        soft_sum_2 = np.sum(posterior_2)
-        tmp = ((hyperMeanNumberOfMeasurements_2 * soft_sum_2) /
-               (soft_sum_2 + hyperMeanNumberOfMeasurements_2)) * np.linalg.solve(variance_2_previous, variance_1_previous)
+            posterior_1 = gaussianPosteriors[:, gaussNumber1Tied].reshape(-1, 1)
+            hyperMean_1 = np.expand_dims(self.hyperMeans[gaussNumber1Tied, :], 1)
+            hyperMeanNumberOfMeasurements_1 = self.hyperMeansNumberOfMeasurements[gaussNumber1Tied]
+            hyperVariance_1 = self.hyperVariances[gaussNumber1Tied, :, :]
+            hyperVarianceNumberOfMeasurements_1 = self.hyperVariancesNumberOfMeasurements[gaussNumber1Tied]
+            variance_1_previous = self.previousVariances[gaussNumber1Tied]
+            N_1 = np.sum(posterior_1)
+            mean_bar_1 = data.T @ posterior_1 / N_1
 
-        # Updates for the means
-        mean_1 = np.linalg.solve((soft_sum_1 + hyperMeanNumberOfMeasurements_1) * np.eye(self.numberOfContrasts) +
-                                 tmp, (data.T @ posterior_1 + hyperMean_1 * hyperMeanNumberOfMeasurements_1 +
-                                               tmp @ ((data.T @ posterior_2) / soft_sum_2)))
+            posteriors_2 = [gaussianPosteriors[:, gaussNumber2Tied].reshape(-1, 1) for gaussNumber2Tied in gaussNumbers2Tied]
+            hyperMeans_2 = [np.expand_dims(self.hyperMeans[gaussNumber2Tied, :], 1) for gaussNumber2Tied in gaussNumbers2Tied]
+            hyperMeansNumberOfMeasurements_2 = [self.hyperMeansNumberOfMeasurements[gaussNumber2Tied] for gaussNumber2Tied in gaussNumbers2Tied]
+            hyperVariances_2 = [self.hyperVariances[gaussNumber2Tied, :, :] for gaussNumber2Tied in gaussNumbers2Tied]
+            hyperVariancesNumberOfMeasurements_2 = [self.hyperVariancesNumberOfMeasurements[gaussNumber2Tied] for gaussNumber2Tied in gaussNumbers2Tied]
+            variances_2_previous = [self.previousVariances[gaussNumber2Tied] for gaussNumber2Tied in gaussNumbers2Tied]
+            Ns_2 = [np.sum(posterior_2) for posterior_2 in posteriors_2]
+            means_bar_2 = [data.T @ posterior_2 / N_2 for posterior_2, N_2 in zip(posteriors_2, Ns_2)] 
 
-        mean_2 = (data.T @ posterior_2 + mean_1 * hyperMeanNumberOfMeasurements_2) / \
-                 (soft_sum_2 + hyperMeanNumberOfMeasurements_2)
+            lams = self.lams[g1]
+            kappas = self.kappas[g1]
+            
+            # 
+            for iteration in range(self.innerIterations):
 
-        # Updates for the variances
-        mu_1_bar = data - mean_1.T
-        mu_2_bar = data - mean_2.T
-        tmp = mu_2_bar.T @ (mu_2_bar * posterior_2) + hyperMeanNumberOfMeasurements_2 *\
-              ((mean_2 - mean_1) @ (mean_2 - mean_1).T)
-        invRatio = variance_1_previous * np.linalg.inv(variance_2_previous)
+                # Treat each contrast independently
+                for contrast in range(self.numberOfContrasts):
+                    # Update means
+                    tmp_rhos = [variance_2_previous[contrast, contrast] / variance_1_previous[contrast, contrast] for variance_2_previous in variances_2_previous]
+                    sqrt_var_1 = np.sqrt(variance_1_previous[contrast, contrast])
+                    tmps = [hyperMeanNumberOfMeasurements_2 / tmp_rho for hyperMeanNumberOfMeasurements_2, tmp_rho in zip(hyperMeansNumberOfMeasurements_2, tmp_rhos)]
+                    
+                    # 
+                    lhs = np.zeros([numberOfGauss2Tied + 1, numberOfGauss2Tied + 1])
+                    rhs = np.zeros(numberOfGauss2Tied + 1)
+                    lhs[0, 0] = N_1 + hyperMeanNumberOfMeasurements_1
+                    rhs[0] = N_1 * mean_bar_1[contrast, 0] + hyperMeanNumberOfMeasurements_1 * hyperMean_1[contrast, 0]
+                    for g2 in range(numberOfGauss2Tied):
+                        #
+                        lhs[0, 0] += tmps[g2]
+                        lhs[0, g2 + 1] = - tmps[g2]
+                        lhs[g2 + 1, 0] = - tmps[g2]
+                        lhs[g2 + 1, g2 + 1] = Ns_2[g2] / tmp_rhos[g2] + tmps[g2]
+                        #
+                        rhs[0] += - lams[g2][contrast] * sqrt_var_1 * tmps[g2]
+                        rhs[g2 + 1] = Ns_2[g2] / tmp_rhos[g2] * means_bar_2[g2][contrast, 0] + lams[g2][contrast] * sqrt_var_1 * tmps[g2] 
 
-        variance_1 = (mu_1_bar.T @ (mu_1_bar * posterior_1) + hyperMeanNumberOfMeasurements_1 *\
-                      ((mean_1 - hyperMean_1) @ (mean_1 - hyperMean_1).T)
-                      + hyperVarianceNumberOfMeasurements_1 * hyperVariance_1 + invRatio @ tmp) /\
-                     (soft_sum_1 + hyperVarianceNumberOfMeasurements_1 + soft_sum_2 + (2 + self.numberOfContrasts))
+                    new_means = np.linalg.solve(lhs, rhs)
 
-        variance_2 = (tmp + hyperVarianceNumberOfMeasurements_2 * self.rho * variance_1) /\
-                     (soft_sum_2 + hyperVarianceNumberOfMeasurements_2)
 
-        if self.useDiagonalCovarianceMatrices:
-            variance_2 = np.diag(np.diag(variance_2))
-            variance_1 = np.diag(np.diag(variance_1))
+                    # Update variances
+                    # First variance_1
+                    variance_bar_1 = (data[:, contrast] - mean_bar_1[contrast, 0])**2 @ posterior_1[:, 0] / N_1
+                    variances_bar_2 = [(data[:, contrast] - mean_bar_2[contrast, 0])**2 @ posterior_2[:, 0] / N_2 for mean_bar_2, posterior_2, N_2 in zip(means_bar_2, posteriors_2, Ns_2)] 
 
-        self.means[self.gaussNumber1Tied, :] = mean_1.T
-        self.means[self.gaussNumber2Tied, :] = mean_2.T
-        self.variances[self.gaussNumber1Tied, :, :] = variance_1
-        self.variances[self.gaussNumber2Tied, :, :] = variance_2
+                    a = N_1 + hyperVarianceNumberOfMeasurements_1
+                    b = 0
+                    c = - (N_1 * (mean_bar_1[contrast, 0] - new_means[0])**2 + N_1 * variance_bar_1) + \
+                        - (hyperMeanNumberOfMeasurements_1 * (hyperMean_1[contrast, 0] - new_means[0])**2 + hyperVarianceNumberOfMeasurements_1 * hyperVariance_1[contrast, contrast])
+                    for g2 in range(numberOfGauss2Tied):
+                    
+                        a += Ns_2[g2] + 3
+                        b += - lams[g2][contrast] * hyperMeansNumberOfMeasurements_2[g2] / tmp_rhos[g2] * (new_means[0] - new_means[g2 + 1])
+                        c += - Ns_2[g2] / tmp_rhos[g2] * (means_bar_2[g2][contrast, 0] - new_means[g2 + 1])**2 + \
+                             - Ns_2[g2] / tmp_rhos[g2] * variances_bar_2[g2] + \
+                             - hyperMeansNumberOfMeasurements_2[g2] / tmp_rhos[g2] * (new_means[0] - new_means[g2 + 1])**2        
 
-        self.previousVariances[self.gaussNumber1Tied, :, :] = variance_1
-        self.previousVariances[self.gaussNumber2Tied, :, :] = variance_2
+                    new_variance_1 = ((-b + np.sqrt(b**2 - 4 * a * c)) / (2 * a))**2  # Squared since we were optimizing for standard deviation
 
-        self.hyperMeans[self.gaussNumber2Tied] = self.means[self.gaussNumber1Tied]
-        self.hyperVariances[self.gaussNumber2Tied] = self.rho * self.variances[self.gaussNumber1Tied]
+                    new_variances_2 = []
+                    for g2 in range(numberOfGauss2Tied):
+                        # Update for each rho (hence variance_2)
+                        beta = hyperMeansNumberOfMeasurements_2[g2] * (new_means[0] + lams[g2][contrast] * np.sqrt(new_variance_1) - new_means[g2 + 1])**2 / new_variance_1 + \
+                               Ns_2[g2] * (means_bar_2[g2][contrast, 0] - new_means[g2 + 1])**2 / new_variance_1 + \
+                               hyperVariancesNumberOfMeasurements_2[g2] * kappas[g2][contrast] + \
+                               Ns_2[g2] * (variances_bar_2[g2] / new_variance_1)
+
+                        gamma = hyperVariancesNumberOfMeasurements_2[g2] + Ns_2[g2]
+                        new_rho = beta / gamma
+                        new_variances_2.append(new_rho * new_variance_1)
+
+                    # Update variables for g1
+                    self.means[gaussNumber1Tied, contrast] = new_means[0]
+                    self.variances[gaussNumber1Tied, contrast, contrast] = new_variance_1
+                    self.previousVariances[gaussNumber1Tied, contrast, contrast] = self.variances[gaussNumber1Tied, contrast, contrast]
+                    variance_1_previous = self.previousVariances[gaussNumber1Tied]
+
+                    for g2, gaussNumber2Tied in enumerate(gaussNumbers2Tied):   
+                        self.means[gaussNumber2Tied, contrast] = new_means[g2 + 1]
+                        self.variances[gaussNumber2Tied, contrast, contrast] = new_variances_2[g2]
+
+                        self.previousVariances[gaussNumber2Tied, contrast, contrast] = self.variances[gaussNumber2Tied, contrast, contrast]
+                        variances_2_previous[g2] = self.previousVariances[gaussNumber2Tied]
+
+                        self.hyperMeans[gaussNumber2Tied, contrast] = self.means[gaussNumber1Tied, contrast] + lams[g2][contrast] * np.sqrt(self.variances[gaussNumber1Tied, contrast, contrast])
+                        self.hyperVariances[gaussNumber2Tied, contrast, contrast] = kappas[g2][contrast] * self.variances[gaussNumber1Tied, contrast, contrast] 
+
 
     def sampleMeansAndVariancesConditioned(self, data, posterior, gaussianNumber, rngNumpy=np.random.default_rng(), constraints=None):
         tmpGmm = GMM([1], self.numberOfContrasts, self.useDiagonalCovarianceMatrices,

@@ -42,6 +42,8 @@ def parseArguments(argv):
     parser.add_argument('--init-reg', metavar='FILE', help='Initial affine registration.')
     parser.add_argument('-a', '--atlas', metavar='DIR', help='Point to an alternative atlas directory.')
     parser.add_argument('--gmm', metavar='FILE', help='Point to an alternative GMM file.')
+    parser.add_argument('--tied-gmm', metavar='FILE', help='Point to tied GMM file.')
+    parser.add_argument('--contrast-names', nargs='+', help='Name of the input contrasts. Need to match the ones in --tied-gmm file provided.')
     parser.add_argument('--ignore-unknown', action='store_true', help='Ignore final priors corresponding to unknown class.')
     parser.add_argument('--options', metavar='FILE', help='Override advanced options via a json file.')
     parser.add_argument('--pallidum-separate', action='store_true', default=False, help='Move pallidum outside of global white matter class. Use this flag when T2/flair is used.')
@@ -52,17 +54,17 @@ def parseArguments(argv):
     parser.add_argument('--affine-coregistration', action='store_true', default=False, help='Use affine transformation for co-registration (default is rigid).') 
     # optional lesion options
     parser.add_argument('--lesion', action='store_true', default=False, help='Enable lesion segmentation (requires tensorflow).')
-    parser.add_argument('--threshold', type=float, default=0.3, help='Lesion threshold for final segmentation. Lesion segmentation must be enabled.')
+    parser.add_argument('--lesion-type', help='Lesion type: "MS" (Multiple Sclerosis) or "Leuko" (Leukoaraiosis).') 
+    parser.add_argument('--lesion-prior-scaling', type=float, default=0.5, help='Scaling factor of lesion prior. Lesion segmentation must be enabled.')
     parser.add_argument('--samples', type=int, default=50, help='Number of samples for lesion segmentation. Lesion segmentation must be enabled.')
     parser.add_argument('--burnin', type=int, default=50, help='Number of burn-in samples for lesion segmentation. Lesion segmentation must be enabled.')
-    parser.add_argument('--lesion-pseudo-samples', nargs=2, type=float, default=[500, 500], help='Lesion pseudo samples mean and variance.')
-    parser.add_argument('--lesion-rho', type=float, default=50, help='Lesion ratio.')
     parser.add_argument('--lesion-mask-structure', default='Cortex', help='Intensity mask brain structure. Lesion segmentation must be enabled.')
     parser.add_argument('--lesion-mask-pattern', type=int, nargs='+', help='Lesion mask list (set value for each input volume): -1 below lesion mask structure mean, +1 above, 0 no mask. Lesion segmentation must be enabled.')
     parser.add_argument('--random-seed', type=int, default=12345, help='Random seed.')
+    parser.add_argument('--alpha', type=float, default=1.0, help='Lesion location prior strength.')
+    parser.add_argument('--do-not-sample', action='store_true', default=False, help='Do not sample (i.e., no VAE is used).')
     # optional options for segmenting 3D reconstructions of photo volumes
     parser.add_argument('--dissection-photo', default=None, help='Use this flag for 3D reconstructed photos, and specify hemispheres that are present in the volumes: left, right, or both')
-
     # optional debugging options
     parser.add_argument('--history', action='store_true', default=False, help='Save history.')
     parser.add_argument('--save-posteriors', nargs='*', help='Save posterior volumes to the "posteriors" subdirectory.')
@@ -96,19 +98,30 @@ def main():
     if os.path.exists( costfile ):
         os.remove(costfile)
 
+    #
+    tiedGMMFileName = args.tied_gmm
+
     # Get the atlas directory
     if args.atlas:
         atlasDir = args.atlas
     else:
         # Atlas defaults
         if args.lesion:
+
+            # 
+            lesion_type = args.lesion_type
+            if lesion_type is None and lesion_type != 'MS' and lesion_type != 'Leuko':
+                sf.system.fatal('Lesion type is either not defined, or not "MS" or "Leuko".')            
+
             from samseg.SamsegUtility import createLesionAtlas
             # Create lesion atlas on the fly, use output directory as temporary folder
             os.makedirs(os.path.join(args.outputDirectory, 'lesion_atlas'), exist_ok=True)
             atlasDir = os.path.join(args.outputDirectory, 'lesion_atlas')
             createLesionAtlas(os.path.join(SAMSEGDIR, 'atlas', '20Subjects_smoothing2_down2_smoothingForAffine2'),
-                              os.path.join(SAMSEGDIR, 'atlas', 'Lesion_Components'),
-                              atlasDir)
+                              os.path.join(SAMSEGDIR, 'atlas', 'Lesion_Components', str(lesion_type)),
+                              atlasDir, lesionPriorScaling=args.lesion_prior_scaling)
+            if tiedGMMFileName is None:
+                tiedGMMFileName = os.path.join(SAMSEGDIR, 'atlas', 'Lesion_Components', str(lesion_type), 'tiedGMMParameters.txt')
         else:
             atlasDir = os.path.join(SAMSEGDIR, 'atlas', '20Subjects_smoothing2_down2_smoothingForAffine2')
 
@@ -184,6 +197,8 @@ def main():
         pallidumAsWM=(not args.pallidum_separate),
         saveModelProbabilities=args.save_probabilities,
         gmmFileName=args.gmm,
+        tiedGMMFileName=tiedGMMFileName,
+        contrastNames=args.contrast_names,
         ignoreUnknownPriors=ignoreUnknownPriors
     )
 
@@ -198,15 +213,13 @@ def main():
         # Delay import until here so that tensorflow doesn't get loaded unless needed
         from samseg.SamsegLesion import SamsegLesion
         samsegObj = SamsegLesion(**samseg_kwargs,
-                                 numberOfPseudoSamplesMean=args.lesion_pseudo_samples[0],
-                                 numberOfPseudoSamplesVariance=args.lesion_pseudo_samples[1],
-                                 rho=args.lesion_rho,
                                  intensityMaskingSearchString=args.lesion_mask_structure,
                                  intensityMaskingPattern=lesion_mask_pattern,
                                  numberOfBurnInSteps=args.burnin,
                                  numberOfSamplingSteps=args.samples,
-                                 threshold=args.threshold,
-                                 randomSeed=args.random_seed
+                                 randomSeed=args.random_seed,
+                                 alpha=args.alpha,
+                                 sampler=(not args.do_not_sample)
                                 )
 
     else:

@@ -25,20 +25,17 @@ class SamsegLongitudinalLesion(SamsegLongitudinal):
         updateLatentMixtureWeights=True,
         updateLatentDeformation=True,
         initializeLatentDeformationToZero=False,
-        threshold=None,
-        thresholdSearchString=None,
         modeNames=None,
         pallidumAsWM=True,
         saveModelProbabilities=False,
         savePosteriors=False,
         numberOfSamplingSteps=50,
         numberOfBurnInSteps=50,
-        numberOfPseudoSamplesMean=500,
-        numberOfPseudoSamplesVariance=500,
-        rho=50,
         intensityMaskingPattern=None,
         intensityMaskingSearchString='Cortex',
         tpToBaseTransforms=None,
+        tiedGMMFileName=None,
+        contrastNames=None
                  ):
         SamsegLongitudinal.__init__(self,
         imageFileNamesList=imageFileNamesList,
@@ -60,20 +57,17 @@ class SamsegLongitudinalLesion(SamsegLongitudinal):
         updateLatentMixtureWeights=updateLatentMixtureWeights,
         updateLatentDeformation=updateLatentDeformation,
         initializeLatentDeformationToZero=initializeLatentDeformationToZero,
-        threshold=threshold,
-        thresholdSearchString=thresholdSearchString,
         modeNames=modeNames,
         pallidumAsWM=pallidumAsWM,
         saveModelProbabilities=saveModelProbabilities,
         savePosteriors=savePosteriors,
-        tpToBaseTransforms=tpToBaseTransforms
+        tpToBaseTransforms=tpToBaseTransforms,
+        tiedGMMFileName=tiedGMMFileName,
+        contrastNames=contrastNames
         )
 
         self.numberOfSamplingSteps = numberOfSamplingSteps
         self.numberOfBurnInSteps = numberOfBurnInSteps
-        self.numberOfPseudoSamplesMean = numberOfPseudoSamplesMean
-        self.numberOfPseudoSamplesVariance = numberOfPseudoSamplesVariance
-        self.rho = rho
         self.intensityMaskingSearchString = intensityMaskingSearchString
         self.intensityMaskingPattern = intensityMaskingPattern
 
@@ -96,12 +90,11 @@ class SamsegLongitudinalLesion(SamsegLongitudinal):
             pallidumAsWM=self.pallidumAsWM,
             numberOfSamplingSteps=self.numberOfSamplingSteps,
             numberOfBurnInSteps=self.numberOfBurnInSteps,
-            numberOfPseudoSamplesMean=self.numberOfPseudoSamplesMean,
-            numberOfPseudoSamplesVariance=self.numberOfPseudoSamplesVariance,
-            rho=self.rho,
             intensityMaskingPattern=self.intensityMaskingPattern,
             intensityMaskingSearchString=self.intensityMaskingSearchString,
-            sampler=False
+            sampler=False,
+            tiedGMMFileName=self.tiedGMMFileName,
+            contrastNames=self.contrastNames
         )
 
     def constructTimepointModels(self):
@@ -127,11 +120,10 @@ class SamsegLongitudinalLesion(SamsegLongitudinal):
                 savePosteriors=self.savePosteriors,
                 numberOfSamplingSteps=self.numberOfSamplingSteps,
                 numberOfBurnInSteps=self.numberOfBurnInSteps,
-                numberOfPseudoSamplesMean=self.numberOfPseudoSamplesMean,
-                numberOfPseudoSamplesVariance=self.numberOfPseudoSamplesVariance,
-                rho=self.rho,
                 intensityMaskingPattern=self.intensityMaskingPattern,
-                intensityMaskingSearchString=self.intensityMaskingSearchString
+                intensityMaskingSearchString=self.intensityMaskingSearchString,
+                tiedGMMFileName=self.tiedGMMFileName,
+                contrastNames=self.contrastNames
             ))
             self.timepointModels[timepointNumber].mask = self.sstModel.mask
             self.timepointModels[timepointNumber].imageBuffers = self.imageBuffersList[timepointNumber]
@@ -157,7 +149,8 @@ class SamsegLongitudinalLesion(SamsegLongitudinal):
         self.setLesionLatentVariables()
 
     def setLesionLatentVariables(self):
-        self.latentMeans[self.sstModel.lesionGaussianNumber] = self.sstModel.gmm.means[self.sstModel.wmGaussianNumber]
-        self.latentVariances[self.sstModel.lesionGaussianNumber] = self.rho * self.sstModel.gmm.variances[self.sstModel.wmGaussianNumber]
-        self.latentMeansNumberOfMeasurements[self.sstModel.lesionGaussianNumber] = self.numberOfPseudoSamplesMean
-        self.latentVariancesNumberOfMeasurements[self.sstModel.lesionGaussianNumber] = self.numberOfPseudoSamplesVariance
+        self.latentMeans[self.sstModel.lesionGaussianNumber] = self.sstModel.gmm.hyperMeans[self.sstModel.lesionGaussianNumber]
+        self.latentVariances[self.sstModel.lesionGaussianNumber] = self.sstModel.gmm.hyperVariances[self.sstModel.lesionGaussianNumber]
+        self.latentMeansNumberOfMeasurements[self.sstModel.lesionGaussianNumber] = self.sstModel.gmm.hyperMeansNumberOfMeasurements[self.sstModel.lesionGaussianNumber]
+        self.latentVariancesNumberOfMeasurements[self.sstModel.lesionGaussianNumber] = self.sstModel.gmm.hyperVariancesNumberOfMeasurements[self.sstModel.lesionGaussianNumber]
+

@@ -88,13 +88,13 @@ class SamsegLongitudinal:
         updateLatentDeformation=True,
         initializeLatentDeformationToZero=False,
         imageToImageTransformMatrix=None,
-        threshold=None,
-        thresholdSearchString=None,
         modeNames=None,
         pallidumAsWM=True,
         saveModelProbabilities=False,
         savePosteriors=False,
         tpToBaseTransforms=None,
+        tiedGMMFileName=None,
+        contrastNames=None
         ):
 
         # Store input parameters as class variables
@@ -102,8 +102,6 @@ class SamsegLongitudinal:
         self.numberOfTimepoints = len(self.imageFileNamesList)
         self.savePath = savePath
         self.atlasDir = atlasDir
-        self.threshold = threshold
-        self.thresholdSearchString = thresholdSearchString
         self.targetIntensity = targetIntensity
         self.targetSearchStrings = targetSearchStrings
         self.numberOfIterations = numberOfIterations
@@ -113,6 +111,8 @@ class SamsegLongitudinal:
         self.pallidumAsWM = pallidumAsWM
         self.savePosteriors = savePosteriors
         self.tpToBaseTransforms = tpToBaseTransforms
+        self.tiedGMMFileName = tiedGMMFileName
+        self.contrastNames = contrastNames
 
         # Check if all time point to base transforms are identity matrices.
         # If so, we can derive a combined 4D mask during preprocessing
@@ -869,7 +869,9 @@ class SamsegLongitudinal:
             targetIntensity=self.targetIntensity,
             targetSearchStrings=self.targetSearchStrings,
             modeNames=self.modeNames,
-            pallidumAsWM=self.pallidumAsWM
+            pallidumAsWM=self.pallidumAsWM,
+            tiedGMMFileName=self.tiedGMMFileName,
+            contrastNames=self.contrastNames
         )
 
     def constructTimepointModels(self):
@@ -892,7 +894,9 @@ class SamsegLongitudinal:
                 modeNames=self.modeNames,
                 pallidumAsWM=self.pallidumAsWM,
                 saveModelProbabilities=self.saveModelProbabilities,
-                savePosteriors=self.savePosteriors
+                savePosteriors=self.savePosteriors,
+                tiedGMMFileName=self.tiedGMMFileName,
+                contrastNames=self.contrastNames
             ))
 
             self.timepointModels[timepointNumber].mask = self.masks[timepointNumber]

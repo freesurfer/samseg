@@ -32,14 +32,14 @@ class Samseg:
         savePosteriors=False,
         saveWarp=None,
         saveMesh=None,
-        threshold=None,
-        thresholdSearchString=None,
         targetIntensity=None,
         targetSearchStrings=None,
         modeNames=None,
         pallidumAsWM=True,
         saveModelProbabilities=False,
         gmmFileName=None,
+        tiedGMMFileName=None,
+        contrastNames=None,
         ignoreUnknownPriors=False,
         dissectionPhoto=None,
         nthreads=1,
@@ -51,8 +51,6 @@ class Samseg:
         self.photo_mask = None  # Useful when working with photos
         self.savePath = savePath
         self.atlasDir = atlasDir
-        self.threshold = threshold
-        self.thresholdSearchString = thresholdSearchString
         self.targetIntensity = targetIntensity
         self.targetSearchStrings = targetSearchStrings
 
@@ -62,6 +60,14 @@ class Samseg:
         elif len(modeNames) != len(imageFileNames):
             raise ValueError('number of mode names does not match number of input images')
         self.modeNames = modeNames
+
+        # 
+        if contrastNames is not None:
+            # 
+            if len(contrastNames) != len(imageFileNames):
+                raise ValueError('Number of contrast names does not match number of input images')
+        else:
+            contrastNames = ['Unspecified' for contrast in self.imageFileNames]
 
         # Eugenio: there's a bug in ITK that will cause kvlImage to fail if it contqins the string "recon" ...
         # If this problem is not exclusive to the photo mode (RGB), we should move this chunk of code outside the if
@@ -113,7 +119,9 @@ class Samseg:
             atlasDir,
             userModelSpecifications,
             pallidumAsWM=pallidumAsWM,
-            gmmFileName=gmmFileName
+            gmmFileName=gmmFileName,
+            tiedGMMFileName=tiedGMMFileName,
+            contrastNames=contrastNames
         )
 
         # if dissectionPhoto is not None:
@@ -429,27 +437,9 @@ class Samseg:
 
         # Convert into a crisp, winner-take-all segmentation, labeled according to the FreeSurfer labeling/naming convention
         names = self.modelSpecifications.names
-        if self.threshold is not None:
-            # Figure out the structure number of the special snowflake structure
-            for structureNumber, name in enumerate(names):
-                if self.thresholdSearchString in name:
-                    thresholdStructureNumber = structureNumber
-                    break
 
-            # Threshold
-            print('thresholding posterior of ', names[thresholdStructureNumber], 'with threshold:', self.threshold)
-            tmp = posteriors[:, thresholdStructureNumber].copy()
-            posteriors[:, thresholdStructureNumber] = posteriors[:, thresholdStructureNumber] > self.threshold
-
-            # Majority voting
-            structureNumbers = np.array(np.argmax(posteriors, 1), dtype=np.uint32)
-
-            # Undo thresholding in posteriors
-            posteriors[:, thresholdStructureNumber] = tmp
-
-        else:
-            # Majority voting
-            structureNumbers = np.array(np.argmax(posteriors, 1), dtype=np.uint32)
+        # Majority voting
+        structureNumbers = np.array(np.argmax(posteriors, 1), dtype=np.uint32)
 
         segmentation = np.zeros(self.imageBuffers.shape[:3], dtype=np.int32)
         fslabels = np.array(self.modelSpecifications.FreeSurferLabels, dtype=np.int32)
@@ -705,7 +695,8 @@ class Samseg:
 
         # Parameter initialization.
         self.gmm = GMM(numberOfGaussiansPerClass, numberOfContrasts=self.imageBuffers.shape[-1],
-                       useDiagonalCovarianceMatrices=self.modelSpecifications.useDiagonalCovarianceMatrices)
+                       useDiagonalCovarianceMatrices=self.modelSpecifications.useDiagonalCovarianceMatrices, 
+                       tiedGMMParameters=self.modelSpecifications.tiedGMMParameters)
 
     def estimateModelParameters(self, initialBiasFieldCoefficients=None, initialDeformation=None,
                                 initialDeformationAtlasFileName=None,

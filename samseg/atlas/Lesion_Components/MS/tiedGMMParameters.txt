@@ -1,0 +1,5 @@
+# The format is: mergedName1 GaussNumber1 mergedName2 GaussNumber2 contrastName kappa lambda PMean PVariance 
+
+GlobalWM 0 Lesions 0 T1w 32.43661081944603 -7.29560280761578 10000 10000
+GlobalWM 0 Lesions 0 FLAIR 2.030850078197842 4.791108998257357 10000 10000
+GlobalWM 0 Lesions 0 Unspecified 50 0 500 500
