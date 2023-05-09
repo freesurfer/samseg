@@ -83,14 +83,6 @@ jobs:
         ZLIB_INCLUDE_DIR: zlib-install/include
         ZLIB_LIBRARY: zlib-install/lib/libz.a
 
-      # Test only on one python version (3.7)
-    - name: Test Samseg
-      run: |
-        cd ..
-        /Library/Frameworks/Python.framework/Versions/3.7/bin/python3 -m pip install pytest
-        /Library/Frameworks/Python.framework/Versions/3.7/bin/python3 -m pip install tensorflow
-        /Library/Frameworks/Python.framework/Versions/3.7/bin/python3 -m pytest samseg/samseg/tests
-
     - name: Upload artifact
       uses: actions/upload-artifact@v2
       with:

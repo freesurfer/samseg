@@ -38,20 +38,19 @@ jobs:
         cd ..
       shell: cmd
          
-    # Also test samseg for python 3.7
-    - name: Build (and test) samseg python 3.7
+    - name: Build and test samseg python 3.7
       uses: actions/setup-python@v2
       with:
         python-version: '3.7'
         architecture: 'x64'
     - run: |
         python -m pip install --user --upgrade setuptools wheel
+        python -m pip install pytest
+        python -m pip install tensorflow
         python setup.py bdist_wheel
         python -m pip install -f .\dist\
         cd ..
         python -c 'import samseg'
-        python -m pip install pytest
-        python -m pip install tensorflow
         python -m pytest samseg\samseg\tests
         
         rm samseg\gems\*.pyd
@@ -60,51 +59,63 @@ jobs:
         ZLIB_INCLUDE_DIR: .\zlib-install\include
         ZLIB_LIBRARY: .\zlib-install\lib\zlibstatic.lib
 
-    - name: Build samseg python 3.8
+    - name: Build and test samseg python 3.8
       uses: actions/setup-python@v2
       with:
         python-version: '3.8'
         architecture: 'x64'
     - run: |
         python -m pip install --user --upgrade setuptools wheel
+        python -m pip install pytest
+        python -m pip install tensorflow
         python setup.py bdist_wheel
-        python -m pip install samseg -f .\dist\
+        python -m pip install -f .\dist\
         cd ..
         python -c 'import samseg'
+        python -m pytest samseg\samseg\tests
+        
         rm samseg\gems\*.pyd
         rm samseg\samseg\gems\Release\*.pyd
       env:
         ZLIB_INCLUDE_DIR: .\zlib-install\include
         ZLIB_LIBRARY: .\zlib-install\lib\zlibstatic.lib
 
-    - name: Build samseg python 3.9
+    - name: Build and test samseg python 3.9
       uses: actions/setup-python@v2
       with:
         python-version: '3.9'
         architecture: 'x64'
     - run: |
         python -m pip install --user --upgrade setuptools wheel
+        python -m pip install pytest
+        python -m pip install tensorflow
         python setup.py bdist_wheel
-        python -m pip install samseg -f .\dist\
+        python -m pip install -f .\dist\
         cd ..
         python -c 'import samseg'
+        python -m pytest samseg\samseg\tests
+        
         rm samseg\gems\*.pyd
         rm samseg\samseg\gems\Release\*.pyd
       env:
         ZLIB_INCLUDE_DIR: .\zlib-install\include
         ZLIB_LIBRARY: .\zlib-install\lib\zlibstatic.lib
         
-    - name: Build samseg python 3.10
+    - name: Build and test samseg python 3.10
       uses: actions/setup-python@v2
       with:
         python-version: '3.10'
         architecture: 'x64'
     - run: |
         python -m pip install --user --upgrade setuptools wheel
+        python -m pip install pytest
+        python -m pip install tensorflow
         python setup.py bdist_wheel
-        python -m pip install samseg -f .\dist\
+        python -m pip install -f .\dist\
         cd ..
         python -c 'import samseg'
+        python -m pytest samseg\samseg\tests
+        
         rm samseg\gems\*.pyd
         rm samseg\samseg\gems\Release\*.pyd
       env:
