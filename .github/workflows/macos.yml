@@ -90,7 +90,7 @@ jobs:
 
         /Library/Frameworks/Python.framework/Versions/3.6/bin/python3 -m pip install pytest
         /Library/Frameworks/Python.framework/Versions/3.6/bin/python3 -m pip install tensorflow
-        /Library/Frameworks/Python.framework/Versions/3.6/bin/python3 -m pytest
+        /Library/Frameworks/Python.framework/Versions/3.6/bin/python3 -m pytest samseg/tests
 
     - name: Upload artifact
       uses: actions/upload-artifact@v2

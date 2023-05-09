@@ -52,7 +52,7 @@ jobs:
         python -c 'import samseg'
         python -m pip install pytest
         python -m pip install tensorflow
-        python -m pytest
+        python -m pytest samseg\samseg\tests
         
         rm samseg\gems\*.pyd
         rm samseg\samseg\gems\Release\*.pyd

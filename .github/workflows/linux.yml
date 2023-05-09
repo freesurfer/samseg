@@ -72,7 +72,7 @@ jobs:
 
         /opt/python/cp36-cp36m/bin/python -m pip install pytest
         /opt/python/cp36-cp36m/bin/python -m pip install tensorflow
-        /opt/python/cp36-cp36m/bin/python -m pytest
+        /opt/python/cp36-cp36m/bin/python -m pytest samseg/tests
 
     - name: Upload artifact
       uses: actions/upload-artifact@v2
