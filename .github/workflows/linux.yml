@@ -66,6 +66,13 @@ jobs:
       env:
         ITK_DIR: ITK-install
 
+      # Test only on one python version (3.6)
+    - name: Test Samseg
+      run: |
+
+        /opt/python/cp36-cp36m/bin/python -m pip install pytest
+        /opt/python/cp36-cp36m/bin/python -m pip install tensorflow
+        /opt/python/cp36-cp36m/bin/python -m pytest
 
     - name: Upload artifact
       uses: actions/upload-artifact@v2

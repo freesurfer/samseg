@@ -38,8 +38,8 @@ jobs:
         cd ..
       shell: cmd
          
-
-    - name: Build samseg python 3.6
+    # Also test samseg for python 3.6
+    - name: Build (and test) samseg python 3.6
       uses: actions/setup-python@v2
       with:
         python-version: '3.6'
@@ -50,6 +50,10 @@ jobs:
         python -m pip install -f .\dist\
         cd ..
         python -c 'import samseg'
+        python -m pip install pytest
+        python -m pip install tensorflow
+        python -m pytest
+        
         rm samseg\gems\*.pyd
         rm samseg\samseg\gems\Release\*.pyd
       env:
