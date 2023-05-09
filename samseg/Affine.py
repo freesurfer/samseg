@@ -474,10 +474,12 @@ class Affine:
         xform.save(ltaFileName)
 
         # Compute and save the talairach.xfm
-        xform = self.computeTalairach( imageToImageTransformMatrix )
-        ltaFileName = os.path.join(savePath, 'samseg.talairach.lta')
-        print('writing talairach transform to %s' % ltaFileName)
-        xform.save(ltaFileName)
+        # Make sure that this function is used only when FREESURFER_HOME is set
+        if os.environ.get('FREESURFER_HOME'):
+            xform = self.computeTalairach( imageToImageTransformMatrix )
+            ltaFileName = os.path.join(savePath, 'samseg.talairach.lta')
+            print('writing talairach transform to %s' % ltaFileName)
+            xform.save(ltaFileName)
 
         # Save the coregistered template
         xform = sf.Affine(imageToImageTransformMatrix, space='voxel', source=templateImage, target=inputImage)
