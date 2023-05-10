@@ -45,10 +45,11 @@ jobs:
         architecture: 'x64'
     - run: |
         python -m pip install --user --upgrade setuptools wheel
-        python -m pip install pytest
-        python -m pip install tensorflow
         python setup.py bdist_wheel
         python -m pip install -f .\dist\
+        python -m pip install -r requirements.txt
+        python -m pip install pytest
+        python -m pip install tensorflow
         cd ..
         python -c 'import samseg'
         python -m pytest samseg\samseg\tests
@@ -66,10 +67,11 @@ jobs:
         architecture: 'x64'
     - run: |
         python -m pip install --user --upgrade setuptools wheel
-        python -m pip install pytest
-        python -m pip install tensorflow
         python setup.py bdist_wheel
         python -m pip install -f .\dist\
+        python -m pip install -r requirements.txt
+        python -m pip install pytest
+        python -m pip install tensorflow
         cd ..
         python -c 'import samseg'
         python -m pytest samseg\samseg\tests
@@ -87,10 +89,11 @@ jobs:
         architecture: 'x64'
     - run: |
         python -m pip install --user --upgrade setuptools wheel
-        python -m pip install pytest
-        python -m pip install tensorflow
         python setup.py bdist_wheel
         python -m pip install -f .\dist\
+        python -m pip install -r requirements.txt
+        python -m pip install pytest
+        python -m pip install tensorflow
         cd ..
         python -c 'import samseg'
         python -m pytest samseg\samseg\tests
@@ -108,10 +111,11 @@ jobs:
         architecture: 'x64'
     - run: |
         python -m pip install --user --upgrade setuptools wheel
-        python -m pip install pytest
-        python -m pip install tensorflow
         python setup.py bdist_wheel
         python -m pip install -f .\dist\
+        python -m pip install -r requirements.txt
+        python -m pip install pytest
+        python -m pip install tensorflow
         cd ..
         python -c 'import samseg'
         python -m pytest samseg\samseg\tests
