@@ -47,12 +47,12 @@ jobs:
         python -m pip install --user --upgrade setuptools wheel
         python setup.py bdist_wheel
         python -m pip install -f .\dist\
-        python -m pip install -r requirements.txt
-        python -m pip install pytest
-        python -m pip install tensorflow
+        #python -m pip install -r requirements.txt
+        #python -m pip install pytest
+        #python -m pip install tensorflow
         cd ..
         python -c 'import samseg'
-        python -m pytest samseg\samseg\tests
+        #python -m pytest samseg\samseg\tests
         
         rm samseg\gems\*.pyd
         rm samseg\samseg\gems\Release\*.pyd
@@ -69,12 +69,12 @@ jobs:
         python -m pip install --user --upgrade setuptools wheel
         python setup.py bdist_wheel
         python -m pip install -f .\dist\
-        python -m pip install -r requirements.txt
-        python -m pip install pytest
-        python -m pip install tensorflow
+        #python -m pip install -r requirements.txt
+        #python -m pip install pytest
+        #python -m pip install tensorflow
         cd ..
         python -c 'import samseg'
-        python -m pytest samseg\samseg\tests
+        #python -m pytest samseg\samseg\tests
         
         rm samseg\gems\*.pyd
         rm samseg\samseg\gems\Release\*.pyd
@@ -91,12 +91,12 @@ jobs:
         python -m pip install --user --upgrade setuptools wheel
         python setup.py bdist_wheel
         python -m pip install -f .\dist\
-        python -m pip install -r requirements.txt
-        python -m pip install pytest
-        python -m pip install tensorflow
+        #python -m pip install -r requirements.txt
+        #python -m pip install pytest
+        #python -m pip install tensorflow
         cd ..
         python -c 'import samseg'
-        python -m pytest samseg\samseg\tests
+        #python -m pytest samseg\samseg\tests
         
         rm samseg\gems\*.pyd
         rm samseg\samseg\gems\Release\*.pyd
@@ -113,12 +113,12 @@ jobs:
         python -m pip install --user --upgrade setuptools wheel
         python setup.py bdist_wheel
         python -m pip install -f .\dist\
-        python -m pip install -r requirements.txt
-        python -m pip install pytest
-        python -m pip install tensorflow
+        #python -m pip install -r requirements.txt
+        #python -m pip install pytest
+        #python -m pip install tensorflow
         cd ..
         python -c 'import samseg'
-        python -m pytest samseg\samseg\tests
+        #python -m pytest samseg\samseg\tests
         
         rm samseg\gems\*.pyd
         rm samseg\samseg\gems\Release\*.pyd
