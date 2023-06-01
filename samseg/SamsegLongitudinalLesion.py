@@ -25,10 +25,12 @@ class SamsegLongitudinalLesion(SamsegLongitudinal):
         updateLatentMixtureWeights=True,
         updateLatentDeformation=True,
         initializeLatentDeformationToZero=False,
+        imageToImageTransformMatrix=None,
         threshold=None,
         thresholdSearchString=None,
         modeNames=None,
         pallidumAsWM=True,
+        saveModelProbabilities=False,
         savePosteriors=False,
         numberOfSamplingSteps=50,
         numberOfBurnInSteps=50,
@@ -37,6 +39,8 @@ class SamsegLongitudinalLesion(SamsegLongitudinal):
         rho=50,
         intensityMaskingPattern=None,
         intensityMaskingSearchString='Cortex',
+        wmSearchString='White',
+        sampler=True,
         tpToBaseTransforms=None,
                  ):
         SamsegLongitudinal.__init__(self,
@@ -59,10 +63,12 @@ class SamsegLongitudinalLesion(SamsegLongitudinal):
         updateLatentMixtureWeights=updateLatentMixtureWeights,
         updateLatentDeformation=updateLatentDeformation,
         initializeLatentDeformationToZero=initializeLatentDeformationToZero,
+        imageToImageTransformMatrix=imageToImageTransformMatrix,
         threshold=threshold,
         thresholdSearchString=thresholdSearchString,
         modeNames=modeNames,
         pallidumAsWM=pallidumAsWM,
+        saveModelProbabilities=saveModelProbabilities,
         savePosteriors=savePosteriors,
         tpToBaseTransforms=tpToBaseTransforms
         )
@@ -74,6 +80,8 @@ class SamsegLongitudinalLesion(SamsegLongitudinal):
         self.rho = rho
         self.intensityMaskingSearchString = intensityMaskingSearchString
         self.intensityMaskingPattern = intensityMaskingPattern
+        self.wmSearchString = wmSearchString
+        self.sampler = sampler
 
     def constructSstModel(self):
 
@@ -99,6 +107,8 @@ class SamsegLongitudinalLesion(SamsegLongitudinal):
             rho=self.rho,
             intensityMaskingPattern=self.intensityMaskingPattern,
             intensityMaskingSearchString=self.intensityMaskingSearchString,
+            thresholdSearchString=self.thresholdSearchString,
+            wmSearchString=self.wmSearchString,
             sampler=False
         )
 
@@ -121,6 +131,7 @@ class SamsegLongitudinalLesion(SamsegLongitudinal):
                 targetSearchStrings=self.targetSearchStrings,
                 modeNames=self.modeNames,
                 pallidumAsWM=self.pallidumAsWM,
+                saveModelProbabilities=self.saveModelProbabilities,
                 savePosteriors=self.savePosteriors,
                 numberOfSamplingSteps=self.numberOfSamplingSteps,
                 numberOfBurnInSteps=self.numberOfBurnInSteps,
@@ -128,7 +139,10 @@ class SamsegLongitudinalLesion(SamsegLongitudinal):
                 numberOfPseudoSamplesVariance=self.numberOfPseudoSamplesVariance,
                 rho=self.rho,
                 intensityMaskingPattern=self.intensityMaskingPattern,
-                intensityMaskingSearchString=self.intensityMaskingSearchString
+                intensityMaskingSearchString=self.intensityMaskingSearchString,
+                thresholdSearchString=self.thresholdSearchString,
+                wmSearchString=self.wmSearchString,
+                sampler=self.sampler
             ))
             self.timepointModels[timepointNumber].mask = self.sstModel.mask
             self.timepointModels[timepointNumber].imageBuffers = self.imageBuffersList[timepointNumber]

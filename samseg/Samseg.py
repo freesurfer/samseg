@@ -4,7 +4,7 @@ import logging
 import pickle
 import scipy.io
 import surfa as sf
-from scipy.ndimage.morphology import binary_dilation as dilation
+from scipy.ndimage import binary_dilation as dilation
 
 from samseg import gems
 from .utilities import Specification
@@ -94,7 +94,7 @@ class Samseg:
         # Initialize some objects
         self.affine = Affine( imageFileName=self.imageFileNames[0],
                               meshCollectionFileName=os.path.join(self.atlasDir, 'atlasForAffineRegistration.txt.gz'),
-                              templateFileName=os.path.join(self.atlasDir, 'template.nii' ) )
+                              templateFileName=os.path.join(self.atlasDir, 'template.nii.gz' ) )
         self.probabilisticAtlas = ProbabilisticAtlas()
 
         # Get full model specifications and optimization options (using default unless overridden by user)
@@ -318,7 +318,7 @@ class Samseg:
         else:
             self.imageBuffers, self.transform, self.voxelSpacing, self.cropping = readCroppedImages(
                 self.imageFileNames,
-                os.path.join(self.atlasDir, 'template.nii'),
+                os.path.join(self.atlasDir, 'template.nii.gz'),
                 self.imageToImageTransformMatrix
             )
 
@@ -525,7 +525,7 @@ class Samseg:
 
         # extract geometries
         source = sf.load_volume(self.imageFileNames[0]).geom
-        target = sf.load_volume(os.path.join(self.atlasDir, 'template.nii')).geom
+        target = sf.load_volume(os.path.join(self.atlasDir, 'template.nii.gz')).geom
 
         # extract vox-to-vox template transform
         # TODO: Grabbing the transform from the saved .mat file in either the cross or base

@@ -8,32 +8,25 @@ namespace py = pybind11;
 #include "itkImage.h"
 #include "kvlRegisterImages.h"
 #include "itkAffineTransform.h"
-#include "itkCorrelationImageToImageMetricv4.h"
+#include "itkMattesMutualInformationImageToImageMetricv4.h"
 
 class KvlAffineRegistration {
     typedef itk::Image< double, 3 > ImageType;
     typedef itk::AffineTransform< double, 3 >  AffineTransformType;
-    typedef itk::CorrelationImageToImageMetricv4<ImageType, ImageType> MetricType;
+    typedef itk::MattesMutualInformationImageToImageMetricv4<ImageType, ImageType> MetricType;
     kvl::RegisterImages<AffineTransformType, MetricType>::Pointer registerer;
     public:
         // Python accessible
         KvlAffineRegistration()
         {
             registerer = kvl::RegisterImages<AffineTransformType, MetricType>::New();
-            registerer->SetCenterOfMassInit(true);
-            std::vector<double> scales;
-            scales.push_back(3.0);
-            scales.push_back(2.0);
-            std::vector<double> sigmas;
-            sigmas.push_back(8.0);
-            sigmas.push_back(4.0);
-            registerer->SetShrinkScales(scales);
-            registerer->SetSmoothingSigmas(sigmas);
-
+            // Set MI histogram bins
+            registerer->GetMetric()->SetNumberOfHistogramBins(64);
+            registerer->SetCenterOfMassInit(false);
         }
     
         KvlAffineRegistration(double transScale, int numIter,
-        py::array_t<double> shrinkScales, double bgLevel,
+        int numHistBins, py::array_t<double> shrinkScales, double bgLevel,
         py::array_t<double> smoothSigmas, bool useCenterOfMass, double sampRate,
         std::string interpolator)
         {
@@ -63,6 +56,7 @@ class KvlAffineRegistration {
             registerer->SetCenterOfMassInit(useCenterOfMass);
             registerer->SetSamplingPercentage(sampRate);
             registerer->SetInterpolator(interpolator);
+            registerer->GetMetric()->SetNumberOfHistogramBins(numHistBins);
         }
 
         void ReadImages(const std::string &fileNameT1, const std::string &fileNameT2)

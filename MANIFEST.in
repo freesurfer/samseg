@@ -1,1 +1,1 @@
-graft samseg/atlas
+graft samseg/atlas/*

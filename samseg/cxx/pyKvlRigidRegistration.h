@@ -21,7 +21,7 @@ class KvlRigidRegistration {
         {
             registerer = kvl::RegisterImages<RigidTransformType, MetricType>::New();
             //Set MI histogram bins
-            registerer->GetMetric()->SetNumberOfHistogramBins(50);
+            registerer->GetMetric()->SetNumberOfHistogramBins(64);
             registerer->SetCenterOfMassInit(false);
         }
     
@@ -36,7 +36,7 @@ class KvlRigidRegistration {
             std::vector<double> scales;
             
             for ( int scaleNum = 0; scaleNum < numScales; scaleNum++ ) {
-            	 scales.push_back( scales.at(scaleNum) );
+            	 scales.push_back( shrinkScales.at(scaleNum) );
             }
 
             py::buffer_info sigmas_info  = smoothSigmas.request();

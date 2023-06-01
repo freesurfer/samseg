@@ -52,20 +52,19 @@ jobs:
         make install
         cd ..
  
-    - name: Build samseg
+    - name: Build samseg and run tests
       run: |
 
         export CC=/opt/rh/devtoolset-8/root/usr/bin/gcc
         export CXX=/opt/rh/devtoolset-8/root/usr/bin/g++
 
-        .github/workflows/linux_build.sh /opt/python/cp36-cp36m/bin/python
         .github/workflows/linux_build.sh /opt/python/cp37-cp37m/bin/python
         .github/workflows/linux_build.sh /opt/python/cp38-cp38/bin/python
         .github/workflows/linux_build.sh /opt/python/cp39-cp39/bin/python
+        .github/workflows/linux_build.sh /opt/python/cp310-cp310/bin/python
         ls dist/*.whl | xargs -n1 auditwheel repair
       env:
         ITK_DIR: ITK-install
-
 
     - name: Upload artifact
       uses: actions/upload-artifact@v2

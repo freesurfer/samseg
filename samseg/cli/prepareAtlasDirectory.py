@@ -4,7 +4,6 @@ import os
 import sys
 import shutil
 import argparse
-import matplotlib.pyplot as plt
 from scipy import ndimage
 
 import numpy as np
@@ -153,8 +152,8 @@ def prepareAtlasDirectory( directoryName,
                            sharedGMMParameters,
                            templateFileName,
                            uninterestingStructureSearchStrings=None, 
-                           smoothingSigmaForFirstLevel=2, meshCollectionFileNameForFirstLevel=None,
-                           smoothingSigmaForAffine=2, meshCollectionFileNameForAffine=None,
+                           smoothingSigmaForFirstLevel=2.0, meshCollectionFileNameForFirstLevel=None,
+                           smoothingSigmaForAffine=2.0, meshCollectionFileNameForAffine=None,
                            affineClassDefinitions=None,
                            FreeSurferLookupTableFileName=None,
                            showFigures=True ):
@@ -261,28 +260,34 @@ def prepareAtlasDirectory( directoryName,
         shutil.copy( FreeSurferLookupTableFileName, 
                      os.path.join( directoryName, 'modifiedFreeSurferColorLUT.txt' ) )
 
-
-
-
     return
   
-def parse_args(args):
-    parser = argparse.ArgumentParser()
-    parser.add_argument("-a", "--atlasdir", required=True,
-                        help="The atlas directory to create")
-    parser.add_argument("-m", "--mesh", required=True,
-                        help="The filename of the mesh collection to use (output of kvlBuildAtlasMesh)")
-    parser.add_argument("-c", "--compression_lut", required=True,
-                        help="The compression lookup table to use (output of kvlBuildAtlasMesh)")
-    parser.add_argument("-g", "--shared_gmm_params", required=True,
-                        help="The filename of the shared GMM parameters to use")
-    parser.add_argument("-t", "--template", required=True,
-                        help="The filename of the template nifti to use")
-    parser.add_argument("--show_figs", default=False)
-    return parser.parse_args()
+def parseArguments(argv):
 
-def main(argv):
-    args = parse_args(argv)
+    parser = argparse.ArgumentParser()
+
+    parser.add_argument("-a", "--atlasdir", required=True, help="The atlas directory to create")
+    parser.add_argument("-m", "--mesh", required=True, help="The filename of the mesh collection to use (output of kvlBuildAtlasMesh)")
+    parser.add_argument("-c", "--compression_lut", required=True, help="The compression lookup table to use (output of kvlBuildAtlasMesh)")
+    parser.add_argument("-g", "--shared_gmm_params", required=True, help="The filename of the shared GMM parameters to use")
+    parser.add_argument("-t", "--template", required=True, help="The filename of the template nifti to use")
+    parser.add_argument("-l", "--fs_lookup_table", help="The FreeSurfer lookup table to use")
+    parser.add_argument("-m1", "--mesh_level_1", help="The filename of the mesh collection to use at the first (lower) level (output of kvlBuildAtlasMesh)")
+    parser.add_argument("-ma", "--mesh_affine", help="The filename of the mesh collection to use for affine registration (output of kvlBuildAtlasMesh)")
+    parser.add_argument("-s1", "--smoothing_level_1", default=2.0, type=float, help="Smoothing factor (sigma) for first mesh level")
+    parser.add_argument("-sa", "--smoothing_level_affine", default=2.0, type=float, help="Smoothing factor (sigma) for affine mesh")
+    parser.add_argument("-us", "--uninteresting_structure_search_strings", nargs='+', help="Uninteresting structures that will be merged to background class (assumed to be the first class)") 
+    parser.add_argument("-ac", "--affine_class_definitions", nargs='+', action='append', help="List of list of merged-structures names to be merged for affine registration")
+    parser.add_argument("-sf", "--show_figs", default=False)
+
+    args = parser.parse_args(argv)
+
+    return args
+
+def main():
+
+    args = parseArguments(sys.argv[1:])
+
     if not os.path.exists(args.mesh):
         print("ERROR: Can't find the mesh file " + args.mesh)
     if not os.path.exists(args.compression_lut):
@@ -291,14 +296,27 @@ def main(argv):
         print("ERROR: Can't find the shared GMM params file " + args.shared_gmm_params)
     if not os.path.exists(args.template):
         print("ERROR: Can't find the template file " + args.template)
+    if args.mesh_level_1 is not None and not os.path.exists(args.mesh_level_1):
+        print("ERROR: Can't find the mesh file " + args.mesh_level_1)
+    if args.mesh_affine is not None and not os.path.exists(args.mesh_affine):
+        print("ERROR: Can't find the mesh file " + args.mesh_affine)
+    if args.fs_lookup_table is not None and not os.path.exists(args.fs_lookup_table):
+        print("ERROR: Can't find FreeSurfer LUT file " + args.fs_lookup_table)
 
     shared_gmm_params = kvlReadSharedGMMParameters(args.shared_gmm_params)
-    prepareAtlasDirectory(args.atlasdir,
-                          args.mesh,
-                          args.compression_lut,
-                          shared_gmm_params,
-                          args.template,
+    prepareAtlasDirectory(directoryName=args.atlasdir,
+                          meshCollectionFileName=args.mesh,
+                          compressionLookupTableFileName=args.compression_lut,
+                          sharedGMMParameters=shared_gmm_params,
+                          templateFileName=args.template,
+                          meshCollectionFileNameForFirstLevel=args.mesh_level_1,
+                          meshCollectionFileNameForAffine=args.mesh_affine,
+                          FreeSurferLookupTableFileName=args.fs_lookup_table,
+                          smoothingSigmaForFirstLevel=args.smoothing_level_1,
+                          smoothingSigmaForAffine=args.smoothing_level_affine,
+                          uninterestingStructureSearchStrings=args.uninteresting_structure_search_strings,
+                          affineClassDefinitions=args.affine_class_definitions,
                           showFigures=args.show_figs)
 
 if __name__ == "__main__":
-    sys.exit(main(sys.argv))
+    main()
