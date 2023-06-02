@@ -36,35 +36,32 @@ Most of the functionalities of SAMSEG do not require [FreeSurfer](https://freesu
 4. Activate the virtual environment:
 `conda activate samseg`
 
-5. Install requirements:
-`python -m pip install -r requirements.txt`
-
-6. Install correct compilers for ITK v.4.13.2
+5. Install correct compilers for ITK v.4.13.2
 `conda install -c conda-forge gxx_linux-64=7.5 gcc_linux-64=7.5 sysroot_linux-64=2.17`
 
-7. Create the ITK build directory
+6. Create the ITK build directory
 `mkdir ITK-build`
 `cd ITK-build`
 
-8. Export compilers installed with conda:
+7. Export compilers installed with conda:
 `export CC=<your_conda_path>/envs/samseg/bin/x86_64-conda_cos6-linux-gnu-gcc `
 `export CXX=<your_conda_path>/envs/samseg/bin/x86_64-conda_cos6-linux-gnu-g++ `
 
-9. Run CMAKE:
-`cmake \
-        -DBUILD_SHARED_LIBS=OFF \
-        -DBUILD_TESTING=OFF \
-        -DBUILD_EXAMPLES=OFF \
-        -DCMAKE_BUILD_TYPE=Release \
-        -DCMAKE_INSTALL_PREFIX=../ITK-install \
-        ../ITK`
+8. Run CMAKE:
+`cmake -DBUILD_SHARED_LIBS=OFF -DBUILD_TESTING=OFF -DBUILD_EXAMPLES=OFF -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=../ITK-install ../ITK`
         
-10. Install:
+9. Install:
 `make install`
 `cd..`
 
-11. Install in development mode (or create a wheel using `bdist_wheel` instead of `develop`)
-`ITK_DIR=ITK-install python setup.py develop`
+10. Install in development mode (`.[test]` installs pytest, use just `.` if you don't want to run tests)
+`ITK_DIR=ITK-install python -m pip install --editable .[test]`
+
+11. If you want to build wheels call
+`ITK_DIR=ITK-install python -m pip wheel . -w ./dist  --no-deps`
+
+12. If you're developing and want to run the tests call (in the root of the git repository):
+`pytest samseg`
 
 ## References 
 

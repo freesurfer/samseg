@@ -1,1 +1,4 @@
 graft samseg/atlas/*
+
+include versioneer.py
+include samseg/_version.py

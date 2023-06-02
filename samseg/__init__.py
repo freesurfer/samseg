@@ -13,3 +13,6 @@ from .SamsegLongitudinal import SamsegLongitudinal
 # from .SamsegLesion import SamsegLesion
 # from .SamsegLongitudinalLesion import SamsegLongitudinalLesion
 from .figures import initVisualizer
+
+from . import _version
+__version__ = _version.get_versions()['version']

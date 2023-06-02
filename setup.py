@@ -1,29 +1,12 @@
 from setuptools import setup, Extension
 from setuptools.command.build_ext import build_ext
-from setuptools import find_namespace_packages
+import versioneer
 import os
 import sys
 import shutil
 import glob
 import subprocess
 import tempfile
-
-####################################################
-# add all scripts in the cli folder as
-# console_scripts or gui_scripts
-####################################################
-
-# IMPORTANT: For the postinstall script to also work
-# ALL scripts should be in the simnibs/cli folder and have
-# a if __name__ == '__main__' clause
-
-script_names = [os.path.splitext(os.path.basename(s))[0]
-                for s in glob.glob('samseg/cli/*.py')]
-
-console_scripts = []
-for s in script_names:
-    if s not in ['__init__']:
-        console_scripts.append(f'{s}=samseg.cli.{s}:main')
 
 # RUN with ITK_DIR="PATH_TO_ITK" python setup.py
 
@@ -81,36 +64,11 @@ class build_ext_(build_ext):
 
 
 setup(
-    name='samseg',
-    version=open('VERSION').readlines()[-1].strip(),
-    description='Sequence-Adaptive Multimodal SEGmentation (SAMSEG)',
-    url='https://github.com/freesurfer/samseg',
-    author='Koen Van Leemput, Oula Puonti, Juan Eugenio Iglesias, Stefano Cerri',
-    author_email='oulap@drcmr.dk',
-    license='GPL3',
-    packages=["samseg", "samseg.subregions", "samseg.gems", "samseg.cli", "samseg.atlas", "samseg.atlas.Lesion_Components", "samseg.atlas.Lesion_Components.VAE"],
-    # packages=find_namespace_packages(),
-#    long_description=open('README.md').read(),
-#    long_description_content_type='text/markdown',
-    # We define ext_modules to trigger a build_ext run
+    version=versioneer.get_version(),
     ext_modules=[
         Extension(
             'samseg.gems.gemsbindings', ['dummy'],
             depends=glob.glob('gems*/*.cxx') + glob.glob('gems*/*.h')
         )],
-    entry_points={
-          'console_scripts': console_scripts,
-      },
-    cmdclass={
-        'build_ext': build_ext_,
-      },
-    install_requires=['surfa',
-                      'scikit-learn',
-                      'numpy'],
-    package_data={
-        '': [os.path.join("samseg", "atlas", "*")],
-      },
-    zip_safe=False,
-    include_package_data=True
-
+    cmdclass=versioneer.get_cmdclass(),
 )
