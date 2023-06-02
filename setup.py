@@ -70,5 +70,5 @@ setup(
             'samseg.gems.gemsbindings', ['dummy'],
             depends=glob.glob('gems*/*.cxx') + glob.glob('gems*/*.h')
         )],
-    cmdclass=versioneer.get_cmdclass(),
+    cmdclass={'build_ext': build_ext_,},
 )
