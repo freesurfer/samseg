@@ -63,6 +63,9 @@ def parseArguments(argv):
     parser.add_argument('--random-seed', type=int, default=12345, help='Random seed.')
     parser.add_argument('--alpha', type=float, default=1.0, help='Lesion location prior strength.')
     parser.add_argument('--do-not-sample', action='store_true', default=False, help='Do not sample (i.e., no VAE is used).')
+    # optional tumor options
+    parser.add_argument('--tumor', action='store_true', default=False, help='Enable tumor segmentation (required tensorflow).')
+    parser.add_argument('--tumor-flat-prior', type=float, default=0.2, help='Tumor flat prior.')
     # optional options for segmenting 3D reconstructions of photo volumes
     parser.add_argument('--dissection-photo', default=None, help='Use this flag for 3D reconstructed photos, and specify hemispheres that are present in the volumes: left, right, or both')
     # optional debugging options
@@ -122,6 +125,19 @@ def main():
                               atlasDir, lesionPriorScaling=args.lesion_prior_scaling)
             if tiedGMMFileName is None:
                 tiedGMMFileName = os.path.join(SAMSEGDIR, 'atlas', 'Lesion_Components', str(lesion_type), 'tiedGMMParameters.txt')
+        elif args.tumor:
+            
+            #
+            from samseg.SamsegUtility import createTumorAtlas
+            # Create tumor atlas on the fly, use output directory as temporary folder
+            os.makedirs(os.path.join(args.outputDirectory, 'tumor_atlas'), exist_ok=True)
+            atlasDir = os.path.join(args.outputDirectory, 'tumor_atlas')
+            createTumorAtlas(os.path.join(SAMSEGDIR, 'atlas', '20Subjects_smoothing2_down2_smoothingForAffine2'),
+                             os.path.join(SAMSEGDIR, 'atlas', 'Tumor_Components'),
+                             atlasDir,
+                             flatPrior=args.tumor_flat_prior)
+            if tiedGMMFileName is None:
+                tiedGMMFileName = os.path.join(SAMSEGDIR, 'atlas', 'Tumor_Components', 'tiedGMMParameters.txt')
         else:
             atlasDir = os.path.join(SAMSEGDIR, 'atlas', '20Subjects_smoothing2_down2_smoothingForAffine2')
 
@@ -222,6 +238,15 @@ def main():
                                  sampler=(not args.do_not_sample)
                                 )
 
+    elif args.tumor:
+        # Delay import until here so that tensorflow doesn't get loaded unless needed
+        from samseg.SamsegTumor import SamsegTumor
+        samsegObj = SamsegTumor(**samseg_kwargs,
+                                numberOfBurnInSteps=args.burnin,
+                                numberOfSamplingSteps=args.samples,
+                                randomSeed=args.random_seed,
+                                sampler=(not args.do_not_sample)
+                               )
     else:
         samsegObj = samseg.Samseg(**samseg_kwargs,
                                   dissectionPhoto=args.dissection_photo,
@@ -242,6 +267,11 @@ def main():
     # If lesion atlas was created on the fly, remove it
     if not args.atlas and args.lesion:
         shutil.rmtree(os.path.join(args.outputDirectory, 'lesion_atlas'))
+    
+    # If tumor atlas was created on the fly, remove it
+    if not args.atlas and args.tumor:
+        shutil.rmtree(os.path.join(args.outputDirectory, 'tumor_atlas'))
+    
 
     timer.mark('run_samseg complete')
 

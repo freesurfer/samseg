@@ -205,12 +205,12 @@ for epoch in range(model.global_step, model.global_step + args.epochs):
         if batch_test != 1:
             feed = x_test[test_idx * args.batch_size:(test_idx + 1) * args.batch_size].astype(np.float32)
         else:
-            feed = np.resize(x_test.astype(np.float32), [args.batch_size, x_test.shape[1], x_test.shape[2], x_test.shape[3], 1])
+            feed = np.resize(x_test.astype(np.float32), [args.batch_size, x_test.shape[1], x_test.shape[2], x_test.shape[3], num_classes])
         if args.spatial_dir is not None:
             if batch_test != 1:
                 feed_spatial = spatial_data_test[test_idx * args.batch_size:(test_idx + 1) * args.batch_size].astype(np.float32)
             else:
-                feed_spatial = np.resize(spatial_data_test.astype(np.float32), [args.batch_size, feed_spatial.shape[1], feed_spatial.shape[2], feed_spatial.shape[3], 1])
+                feed_spatial = np.resize(spatial_data_test.astype(np.float32), [args.batch_size, feed_spatial.shape[1], feed_spatial.shape[2], feed_spatial.shape[3], num_classes])
         else:
             feed_spatial = None
         loss_it, rec_loss_it, kl_loss_it = compute_loss(model, feed, spatial_weights=feed_spatial,
@@ -218,10 +218,10 @@ for epoch in range(model.global_step, model.global_step + args.epochs):
         loss += loss_it
         rec_loss += rec_loss_it
         kl_loss += kl_loss_it
-    print('Epoch: {}, Test set loss: {}, rec: {}, KL: {}'.format(epoch,
-                                                                 loss / batch_test,
-                                                                 rec_loss / batch_test,
-                                                                 kl_loss / batch_test))
+        print('Epoch: {}, Test set loss: {}, rec: {}, KL: {}'.format(epoch,
+                                                                     loss / batch_test,
+                                                                     rec_loss / batch_test,
+                                                                     kl_loss / batch_test))
         tf.summary.scalar('test losses/loss', loss / batch_test, step=model.global_step)
         tf.summary.scalar('test losses/rec_loss',  rec_loss / batch_test, step=model.global_step)
         tf.summary.scalar('test losses/KL_loss',  kl_loss / batch_test, step=model.global_step)

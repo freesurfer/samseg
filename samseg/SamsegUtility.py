@@ -83,7 +83,7 @@ def getModelSpecifications(atlasDir, userModelSpecifications={}, pallidumAsWM=Tr
                 PVariances = np.zeros(numberOfContrasts)
                 for c, contrast in enumerate(contrastNames):
                     for tiedGMMParameters3 in tiedGMMParametersFromFile:
-                        if tiedGMMParameters3.mergedName1 == tiedGMMParameter2.mergedName1 and tiedGMMParameters3.mergedName2 == tiedGMMParameter2.mergedName2:
+                        if tiedGMMParameters3.mergedName1 == tiedGMMParameter2.mergedName1 and tiedGMMParameters3.mergedName2 == tiedGMMParameter2.mergedName2 and tiedGMMParameters3.gaussNumber2 == tiedGMMParameter2.gaussNumber2:
                             if tiedGMMParameters3.contrastName == contrast:
                                kappas[c] = tiedGMMParameters3.kappa
                                lams[c] = tiedGMMParameters3.lam
@@ -536,6 +536,102 @@ def createLesionAtlas(samseg_atlas_dir, lesion_components_dir, output_dir, lesio
     shutil.copy(os.path.join(samseg_atlas_dir, 'atlasForAffineRegistration.txt.gz'), os.path.join(output_dir, 'atlasForAffineRegistration.txt.gz'))
     shutil.copy(os.path.join(samseg_atlas_dir, 'modifiedFreeSurferColorLUT.txt'), os.path.join(output_dir, 'modifiedFreeSurferColorLUT.txt'))
     shutil.copytree(os.path.join(lesion_components_dir, 'VAE'), os.path.join(output_dir, 'VAE'), dirs_exist_ok=True)    
+
+
+# TODO: This is a duplicate of createLesionAtlas, a good implementation will merge the two are reuse code
+def createTumorAtlas(samseg_atlas_dir, lesion_components_dir, output_dir, flatPrior=0.3):
+
+    # Create lesion atlas directory from samseg atlas dir and lesion components (VAE only)
+    # Create new atlas folder
+    os.makedirs(output_dir, exist_ok=True)
+
+    # Remove structures from samseg atlas
+    remove_structures = []
+    
+    # New class(es) information
+    new_classes = [["NCR", "ED", "ET"]] # NCR= Necrotic Tumor Core , ED=Edema, ET= Enhancing Tumor
+    new_superclasses = ["Tumor"]  
+    new_components_superclasseses = [3]
+    new_labels = [89, 90, 91]
+    rgbs = [[255, 0, 0], [0, 255, 0], [0, 0, 255]]
+
+    # Assuming 2 multi-resolution meshes
+    for level in range(2):
+
+        # Retrieve all the SAMSEG related files
+        # Here we are making some assumptions about file names
+        mesh_collection_path = os.path.join(samseg_atlas_dir, "atlas_level" + str(level + 1) + ".txt.gz")
+        freesurfer_labels, names, colors = kvlReadCompressionLookupTable(os.path.join(samseg_atlas_dir, 'compressionLookupTable.txt'))
+        # Get also compressed labels, as they are in the same order as FreeSurfer_labels
+        compressed_labels = list(np.arange(0, len(freesurfer_labels)))
+
+        # Read mesh collection
+        mesh_collection = gems.KvlMeshCollection()
+        mesh_collection.read(mesh_collection_path)
+
+        # Load reference mesh
+        mesh = mesh_collection.reference_mesh
+        alphas = mesh.alphas
+
+        # Remove structures from alphas
+        for structure in remove_structures:
+            idx = names.index(structure)
+            compressed_labels.pop(idx)
+            freesurfer_labels.pop(idx)
+            colors.pop(idx)
+            names.pop(idx)
+
+        # Tumor probability only within certain structures (e.g., inside the brain)
+        within_brain_classes = [14, 9, 33, 22, 11, 5, 41, 37, 28, 39, 26, 7, 3, 20, 17, 27, 25, 34, 21, 13, 10, 35, 19, 12, 6, 38, 40, 29, 36, 18, 16, 31, 30, 15, 43, 32, 42]
+        estimated_tumor_prior = np.sum(alphas[:, within_brain_classes], axis=-1) * flatPrior
+
+        # Create new_alphas and re-normalize
+        new_alphas = alphas[:, compressed_labels]
+        normalizer = np.sum(new_alphas, axis=1)
+        alphas = new_alphas / normalizer[:, None]
+
+        new_alphas = np.zeros([alphas.shape[0], alphas.shape[1] + 3])
+        compressed_labels = np.arange(0, alphas.shape[1])
+
+        new_alphas[:, compressed_labels] = (1 - estimated_tumor_prior[:, None]) * alphas
+        new_alphas[:, alphas.shape[1]:] = estimated_tumor_prior[:, None] / 3
+
+        # Re-normalize alphas
+        normalizer = np.sum(new_alphas, axis=1) + eps
+        alphas = new_alphas / normalizer[:, None]
+        # Add alphas in mesh
+        mesh.alphas = alphas
+        # Save mesh
+        mesh_collection.write(os.path.join(output_dir, "atlas_level" + str(level + 1) + ".txt"))
+
+    # Create new compression lookup table
+    for class_name, fs_label, rgb in zip(new_classes[0], new_labels, rgbs):
+        names.append(class_name)
+        freesurfer_labels.append(fs_label)
+        colors.append([255, rgb[0], rgb[1], rgb[2]])
+
+    kvlWriteCompressionLookupTable(os.path.join(output_dir, 'compressionLookupTable.txt'), freesurfer_labels, names, colors)
+
+    # Load GMM file, read its content, add new super_classes with their relative components and save everything
+    with open(os.path.join(samseg_atlas_dir, 'sharedGMMParameters.txt'), 'r') as f_r:
+        gmm_file = f_r.readlines()
+    i = 0
+    for class_name, gmm_component in zip(new_superclasses, new_components_superclasseses):
+        string = class_name + " " + str(gmm_component) + " "
+        for new_class in new_classes[i]:
+            string += new_class + " "
+        gmm_file.append(string)
+        i = i + 1
+    with open(os.path.join(output_dir, 'sharedGMMParameters.txt'), 'w' ) as f_w:
+        f_w.write(''.join(gmm_file))
+
+    # Copy all the other parameters
+    shutil.copy(os.path.join(samseg_atlas_dir, 'template.nii.gz'), os.path.join(output_dir, 'template.nii.gz'))
+    shutil.copy(os.path.join(samseg_atlas_dir, 'atlasForAffineRegistration.txt.gz'), os.path.join(output_dir, 'atlasForAffineRegistration.txt.gz'))
+    shutil.copy(os.path.join(samseg_atlas_dir, 'modifiedFreeSurferColorLUT.txt'), os.path.join(output_dir, 'modifiedFreeSurferColorLUT.txt'))
+    shutil.copytree(os.path.join(lesion_components_dir, 'VAE'), os.path.join(output_dir, 'VAE'), dirs_exist_ok=True)    
+
+
 
 def coregister(fixed_image, moving_image, output_image, affine=False):
 
