@@ -18,11 +18,12 @@ jobs:
     
     - name: Install Python
       run: |
-        brew install python@3.7
+
         brew install python@3.8
         brew install python@3.9
         brew install python@3.10
-
+        brew install python@3.11
+        
     - name: Checkout submodules
       run: | 
         git submodule init
@@ -53,10 +54,10 @@ jobs:
 
     - name: Build samseg
       run: |
-        .github/workflows/macos_build.sh /usr/local/bin/python3.7
         .github/workflows/macos_build.sh /usr/local/bin/python3.8
         .github/workflows/macos_build.sh /usr/local/bin/python3.9
         .github/workflows/macos_build.sh /usr/local/bin/python3.10
+        .github/workflows/macos_build.sh /usr/local/bin/python3.11
       env:
         ITK_DIR: ITK-install
         ZLIB_INCLUDE_DIR: zlib-install/include

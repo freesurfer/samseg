@@ -58,10 +58,10 @@ jobs:
         export CC=/opt/rh/devtoolset-8/root/usr/bin/gcc
         export CXX=/opt/rh/devtoolset-8/root/usr/bin/g++
 
-        .github/workflows/linux_build.sh /opt/python/cp37-cp37m/bin/python
         .github/workflows/linux_build.sh /opt/python/cp38-cp38/bin/python
         .github/workflows/linux_build.sh /opt/python/cp39-cp39/bin/python
         .github/workflows/linux_build.sh /opt/python/cp310-cp310/bin/python
+        .github/workflows/linux_build.sh /opt/python/cp311-cp311/bin/python
         ls dist/*.whl | xargs -n1 auditwheel repair
       env:
         ITK_DIR: ITK-install
