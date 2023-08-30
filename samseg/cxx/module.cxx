@@ -61,11 +61,13 @@ PYBIND11_MODULE(gemsbindings, m) {
                 py::arg("K0"),
                 py::arg("K1"),
                 py::arg("transform"))
-            .def("evaluate_mesh_position", &KvlCostAndGradientCalculator::EvaluateMeshPosition)
+            
             // Set parameters for DTI calculators
             .def("SetWishartParams", &KvlCostAndGradientCalculator::SetWishartParams)
             .def("SetFrobeniusParams", &KvlCostAndGradientCalculator::SetFrobeniusParams)
             .def("SetDSWparams", &KvlCostAndGradientCalculator::SetDSWparams)
+
+            .def("evaluate_mesh_position", &KvlCostAndGradientCalculator::EvaluateMeshPosition)
             // Aliases to help with profiling
             .def("evaluate_mesh_position_a", &KvlCostAndGradientCalculator::EvaluateMeshPosition)
             .def("evaluate_mesh_position_b", &KvlCostAndGradientCalculator::EvaluateMeshPosition)

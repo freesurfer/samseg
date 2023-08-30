@@ -75,10 +75,18 @@ public:
                 numberOfGaussiansPerClass_converted[ classNumber ] = numberOfGaussiansPerClass.at(classNumber);
             }
 
-            kvl::AtlasMeshToIntensityImageCostAndGradientCalculator::Pointer myCalculator;
+            //kvl::AtlasMeshToIntensityImageCostAndGradientCalculator::Pointer myCalculator;
+            std::vector< ImageType::ConstPointer> images_converted;
+            for(auto image: images){
+                ImageType::ConstPointer constImage = static_cast< const ImageType* >( image.m_image.GetPointer() );
+                images_converted.push_back( constImage );
+            }
 	    if (typeName == "AtlasMeshToIntensityImage")
             {
-              myCalculator = kvl::AtlasMeshToIntensityImageCostAndGradientCalculator::New();
+              kvl::AtlasMeshToIntensityImageCostAndGradientCalculator::Pointer myCalculator = kvl::AtlasMeshToIntensityImageCostAndGradientCalculator::New();
+              myCalculator->SetImages( images_converted );
+              myCalculator->SetParameters( means_converted, variances_converted, mixtureWeights_converted, numberOfGaussiansPerClass_converted );
+              calculator = myCalculator;
             }
         
         else if (typeName == "DSWbeta")
@@ -104,10 +112,13 @@ public:
               calculator = myCalculator;
             }
             else
-	    {
-              myCalculator = kvl::AtlasMeshToIntensityImageLogDomainCostAndGradientCalculator::New();
+	        {
+              kvl::AtlasMeshToIntensityImageLogDomainCostAndGradientCalculator::Pointer myCalculator = kvl::AtlasMeshToIntensityImageLogDomainCostAndGradientCalculator::New();
+              myCalculator->SetImages( images_converted );
+              myCalculator->SetParameters( means_converted, variances_converted, mixtureWeights_converted, numberOfGaussiansPerClass_converted );
+              calculator = myCalculator;
             }
-
+            /*
             std::vector< ImageType::ConstPointer> images_converted;
             for(auto image: images){
                 ImageType::ConstPointer constImage = static_cast< const ImageType* >( image.m_image.GetPointer() );
@@ -116,7 +127,7 @@ public:
             myCalculator->SetImages( images_converted );
             myCalculator->SetParameters( means_converted, variances_converted, mixtureWeights_converted, numberOfGaussiansPerClass_converted );
             calculator = myCalculator;
-
+            */
         } else if (typeName == "MutualInformation") {
 
             kvl::MutualInformationCostAndGradientCalculator::Pointer myCalculator = kvl::MutualInformationCostAndGradientCalculator::New();
