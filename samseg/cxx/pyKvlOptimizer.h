@@ -117,7 +117,7 @@ public:
                 }
                 case 'B':
                 {
-                    kvl::AtlasMeshDeformationLBFGSOptimizer::Pointer  myOptimizer \
+                    kvl::AtlasMeshDeformationLBFGSOptimizer::Pointer  myOptimizer 
                             = dynamic_cast< kvl::AtlasMeshDeformationLBFGSOptimizer* >( optimizer.GetPointer() );
                     if ( myOptimizer )
                     {
