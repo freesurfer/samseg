@@ -30,15 +30,13 @@ set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${GEMS_RUNTIME_PATH})
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${GEMS_RUNTIME_PATH})
 
 set(CMAKE_CXX_STANDARD 11)
-if(NOT APPLE_ARM64) 
-   set(CMAKE_CXX_FLAGS "-fPIC -fpermissive -msse2 -mfpmath=sse")
-endif()
+set(CMAKE_CXX_FLAGS "-fPIC -fpermissive -msse2 -mfpmath=sse")
 
-add_compile_options(-Wno-inconsistent-missing-override -Wno-self-assign-field)
+# SC 2023/04/04: Commented out as it causes problem with Windows build
+# add_compile_options(-Wno-inconsistent-missing-override -Wno-self-assign-field)
 
 # to set additional debug cxxflags:
 #   export GEMS_DEBUG_CXXFLAG="-DGEMS_DEBUG_RASTERIZE_VOXEL_COUNT"
-#   export GEMS_DEBUG_CXXFLAG="-DGEMS_DEBUG_TET_BOUNDING_BOX"
 #   touch CMakeLists.txt to trigger re-configuration
 if(DEFINED ENV{GEMS_DEBUG_CXXFLAG})
   message(WARNING "additional gems debug cxxflags: $ENV{GEMS_DEBUG_CXXFLAG}")
@@ -162,13 +160,13 @@ set(SOURCES_DYN
 
 # gems libary
 add_library(kvlGEMSCommon ${SOURCES})
-target_link_libraries(kvlGEMSCommon ${ITK_LIBRARIES} ${ZLIB_LIBRARIES})
+target_link_libraries(kvlGEMSCommon ${ZLIB_LIBRARIES} ${ITK_LIBRARIES})
 
 # gems library with dynamic meshes.  Needed for `kvlBuildAtlasMesh` but causes
 # samseg to run slower, so only link against `kvlGEMSCommon_dynmesh` when nessesary.
 add_library(kvlGEMSCommon_dynmesh ${SOURCES_DYN})
 target_compile_definitions(kvlGEMSCommon_dynmesh PRIVATE -DUSE_DYNAMIC_MESH)
-target_link_libraries(kvlGEMSCommon_dynmesh ${ITK_LIBRARIES} ${ZLIB_LIBRARIES})
+target_link_libraries(kvlGEMSCommon_dynmesh ${ZLIB_LIBRARIES} ${ITK_LIBRARIES})
 
 ## !!!BAD!!! both `kvlGEMSCommon_dynmesh` `kvlGEMSCommon` will have the same md5sum
 ## Useful for testing though
