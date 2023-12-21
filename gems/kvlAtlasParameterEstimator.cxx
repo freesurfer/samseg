@@ -1,5 +1,9 @@
 #include "kvlAtlasParameterEstimator.h"
 
+#if ITK_VERSION_MAJOR >= 5
+#include <itkMultiThreaderBase.h>
+#endif
+
 #include "itkImageRegionConstIterator.h"
 #include "kvlAtlasMeshLabelImageStatisticsCollector.h"
 #include "kvlAtlasMeshToLabelImageCostAndGradientCalculator.h"
@@ -40,7 +44,11 @@ AtlasParameterEstimator
 
   m_PositionOptimizer = LBFGS;
 
+#if ITK_VERSION_MAJOR >= 5
+  m_NumberOfThreads = itk::MultiThreaderBase::GetGlobalDefaultNumberOfThreads();
+#else  
   m_NumberOfThreads = itk::MultiThreader::GetGlobalDefaultNumberOfThreads();
+#endif  
   
 }
 
@@ -363,7 +371,7 @@ AtlasParameterEstimator
   
   
   // Set up a deformation optimizer and pass the gradient calculator on to it
-  AtlasMeshDeformationOptimizer::Pointer  optimizer = 0;
+  AtlasMeshDeformationOptimizer::Pointer  optimizer = nullptr;
   switch( m_PositionOptimizer ) 
     {
     case FIXED_STEP_GRADIENT_DESCENT: 
@@ -430,7 +438,7 @@ AtlasParameterEstimator
   if ( ( labelImageNumber >= m_MeshCollection->GetNumberOfMeshes() ) || 
        ( labelImageNumber >= m_LabelImages.size() ) )
     {
-    return 0;
+    return nullptr;
     }    
 
   // Set up gradient calculator
