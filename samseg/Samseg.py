@@ -4,16 +4,16 @@ import logging
 import pickle
 import scipy.io
 import surfa as sf
-from scipy.ndimage.morphology import binary_dilation as dilation
+from scipy.ndimage import binary_dilation as dilation
 
-import gems
-from gems.utilities import Specification
-from gems.BiasField import BiasField
-from gems.ProbabilisticAtlas import ProbabilisticAtlas
-from gems.GMM import GMM
-from gems.Affine import Affine
-from gems.SamsegUtility import *
-from gems.merge_alphas import kvlMergeAlphas, kvlGetMergingFractionsTable
+from samseg import gems
+from .utilities import Specification
+from .BiasField import BiasField
+from .ProbabilisticAtlas import ProbabilisticAtlas
+from .GMM import GMM
+from .Affine import Affine
+from .SamsegUtility import *
+from .merge_alphas import kvlMergeAlphas, kvlGetMergingFractionsTable
 
 
 eps = np.finfo(float).eps
@@ -74,10 +74,10 @@ class Samseg:
                 raise ValueError('In photo mode, you cannot provide more than one input image volume')
 
             input_vol = sf.load_volume(self.imageFileNames[0])
-            input_vol.save(self.savePath + '/original_input.mgz')
+            input_vol.save(os.path.join(self.savePath, 'original_input.mgz'))
             if input_vol.nframes > 1:
                 input_vol = input_vol.mean(frames=True)
-            input_vol.save(self.savePath + '/grayscale_input.mgz')
+            input_vol.save(os.path.join(self.savePath, 'grayscale_input.mgz'))
 
             # We also a small band of noise around the mask; otherwise the background/skull/etc may fit the cortex
             self.photo_mask = input_vol.data > 0
@@ -87,14 +87,14 @@ class Samseg:
             rng = np.random.default_rng(2021)
             input_vol.data[ring] = max_noise * rng.random(input_vol.data[ring].shape[0])
             self.imageFileNames = []
-            self.imageFileNames.append(self.savePath + '/grayscale_input_with_ring.mgz')
+            self.imageFileNames.append(os.path.join(self.savePath,'grayscale_input_with_ring.mgz'))
             input_vol.save(self.imageFileNames[0])
 
 
         # Initialize some objects
         self.affine = Affine( imageFileName=self.imageFileNames[0],
                               meshCollectionFileName=os.path.join(self.atlasDir, 'atlasForAffineRegistration.txt.gz'),
-                              templateFileName=os.path.join(self.atlasDir, 'template.nii' ) )
+                              templateFileName=os.path.join(self.atlasDir, 'template.nii.gz' ) )
         self.probabilisticAtlas = ProbabilisticAtlas()
 
         # Get full model specifications and optimization options (using default unless overridden by user)
@@ -102,11 +102,11 @@ class Samseg:
         self.optimizationOptions = getOptimizationOptions(atlasDir, userOptimizationOptions)
         if dissectionPhoto and (gmmFileName is None):
             if dissectionPhoto == 'left':
-                gmmFileName = self.atlasDir + '/photo.lh.sharedGMMParameters.txt'
+                gmmFileName = os.path.join(self.atlasDir, 'photo.lh.sharedGMMParameters.txt')
             elif dissectionPhoto == 'right':
-                gmmFileName = self.atlasDir + '/photo.rh.sharedGMMParameters.txt'
+                gmmFileName = os.path.join(self.atlasDir, 'photo.rh.sharedGMMParameters.txt')
             elif dissectionPhoto == 'both':
-                gmmFileName = self.atlasDir + '/photo.both.sharedGMMParameters.txt'
+                gmmFileName = os.path.join(self.atlasDir, 'photo.both.sharedGMMParameters.txt')
             else:
                 sf.system.fatal('dissection photo mode must be left, right, or both')
         self.modelSpecifications = getModelSpecifications(
@@ -229,16 +229,16 @@ class Samseg:
         if self.imageToImageTransformMatrix is None:
 
             if self.dissectionPhoto is not None:
-                reference = self.savePath + '/grayscale_input.mgz'
+                reference = os.path.join(self.savePath, 'grayscale_input.mgz')
                 if self.dissectionPhoto=='left':
-                    moving = self.atlasDir + '/exvivo.template.lh.suptent.nii'
+                    moving = os.path.join(self.atlasDir, 'exvivo.template.lh.suptent.nii')
                 elif self.dissectionPhoto=='right':
-                    moving = self.atlasDir + '/exvivo.template.rh.suptent.nii'
+                    moving = os.path.join(self.atlasDir, 'exvivo.template.rh.suptent.nii')
                 elif self.dissectionPhoto=='both':
-                    moving = self.atlasDir + '/exvivo.template.suptent.nii'
+                    moving = os.path.join(self.atlasDir, 'exvivo.template.suptent.nii')
                 else:
                     sf.system.fatal('dissection photo mode must be left, right, or both')
-                transformFile = self.savePath  + '/atlas2image.lta'
+                transformFile = os.path.join(self.savePath, 'atlas2image.lta')
                 cmd = 'mri_coreg  --seed 2021 --mov ' + moving + ' --ref ' + reference + ' --reg ' + transformFile + \
                       ' --dof 12 --threads ' + str(self.nthreads)
                 os.system(cmd)
@@ -318,7 +318,7 @@ class Samseg:
         else:
             self.imageBuffers, self.transform, self.voxelSpacing, self.cropping = readCroppedImages(
                 self.imageFileNames,
-                os.path.join(self.atlasDir, 'template.nii'),
+                os.path.join(self.atlasDir, 'template.nii.gz'),
                 self.imageToImageTransformMatrix
             )
 
@@ -479,11 +479,11 @@ class Samseg:
                     print(self.scalingFactors[contrastNumber], file=fid)
 
         else: # photos
-            self.writeImage(expBiasFields[..., 0], self.savePath + '/illlumination_field.mgz')
+            self.writeImage(expBiasFields[..., 0], os.path.join(self.savePath, 'illlumination_field.mgz'))
             original_vol = sf.load_volume(self.originalImageFileNames[0])
-            bias_native = sf.load_volume(self.savePath + '/illlumination_field.mgz')
+            bias_native = sf.load_volume(os.path.join(self.savePath, 'illlumination_field.mgz'))
             original_vol = original_vol / (1e-6 + bias_native)
-            original_vol.save(self.savePath + '/illlumination_corrected.mgz')
+            original_vol.save(os.path.join(self.savePath, 'illlumination_corrected.mgz'))
 
         if self.savePosteriors:
             posteriorPath = os.path.join(self.savePath, 'posteriors')
@@ -560,7 +560,7 @@ class Samseg:
 
         # extract geometries
         source = sf.load_volume(self.imageFileNames[0]).geom
-        target = sf.load_volume(os.path.join(self.atlasDir, 'template.nii')).geom
+        target = sf.load_volume(os.path.join(self.atlasDir, 'template.nii.gz')).geom
 
         # extract vox-to-vox template transform
         # TODO: Grabbing the transform from the saved .mat file in either the cross or base
