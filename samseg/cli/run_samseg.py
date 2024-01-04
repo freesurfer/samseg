@@ -71,6 +71,7 @@ def parseArguments(argv):
     parser.add_argument('--save-mesh', action='store_true', help='Save the final mesh in template space.')
     parser.add_argument('--save-warp', action='store_true', help='Save the image->template warp field.')
     parser.add_argument('--movie', action='store_true', default=False, help='Show history as arrow key controlled time sequence.')
+    parser.add_argument('--fat-shift', action='store_true', default=False, help='fat shift')    
 
     args = parser.parse_args(argv)
 
@@ -212,7 +213,8 @@ def main():
     else:
         samsegObj = samseg.Samseg(**samseg_kwargs,
                                   dissectionPhoto=args.dissection_photo,
-                                  nthreads=args.threads)
+                                  nthreads=args.threads,
+                                  fat_shift=args.fat_shift)
 
     _, _, _, optimizationSummary = samsegObj.segment(costfile=costfile,
                                                      timer=timer,

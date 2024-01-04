@@ -6,6 +6,8 @@ from .SamsegUtility import *
 from .utilities import Specification, icv
 from .Affine import Affine
 from .GMM import GMM
+from .GMM_fat_shift import GMM_fat_shift
+from .Fatshift import Fatshift
 from .BiasField import BiasField
 from .ProbabilisticAtlas import ProbabilisticAtlas
 from .Samseg import Samseg
