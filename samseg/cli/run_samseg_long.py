@@ -27,6 +27,7 @@ def parseArguments(argv):
     parser.add_argument('--burnin', type=int, default=50, help='Number of burn-in samples for lesion segmentation. Lesion segmentation must be enabled.')
     parser.add_argument('--lesion-mask-structure', default='Cortex', help='Intensity mask brain structure. Lesion segmentation must be enabled.')
     parser.add_argument('--lesion-mask-pattern', type=int, nargs='+', help='Lesion mask list (set value for each input volume): -1 below lesion mask structure mean, +1 above, 0 no mask. Lesion segmentation must be enabled.')
+    parser.add_argument('--do-not-use-shape-model', action='store_true', default=False, help='Do not use the lesion shape model (VAE). Lesion segmentation must be enabled.')
     # optional processing options
     parser.add_argument('-m', '--mode', nargs='+', help='Output basenames for the input image mode.')
     parser.add_argument('-a', '--atlas', metavar='DIR', help='Point to an alternative atlas directory.')
@@ -148,7 +149,8 @@ def main():
             intensityMaskingPattern=lesion_mask_pattern,
             numberOfBurnInSteps=args.burnin,
             numberOfSamplingSteps=args.samples,
-            threshold=args.threshold
+            threshold=args.threshold,
+            sampler=not args.do_not_use_shape_model
         )
 
     else:
