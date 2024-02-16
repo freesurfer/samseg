@@ -18,7 +18,10 @@ endif()
 # --------------------------------------------------
 #               external dependencies
 # --------------------------------------------------
-
+set(pybind11_DIR $ENV{pybind11_DIR})
+if(NOT pybind11_DIR)
+  set(pydbind11_DIR "pybind11")
+endif()
 
 # -------- itk --------
 find_package(ITK HINTS ${ITK_DIR} REQUIRED)
@@ -35,7 +38,8 @@ set(CMAKE_CXX_STANDARD 11)
 # --------------------------------------------------
 
 # initialize pybind for python wrapping
-add_subdirectory(pybind11)
+add_subdirectory(${pybind11_DIR} pybind11)
+message(STATUS "ITK_DIR=${ITK_DIR} pybind11_DIR=${pybind11_DIR}")
 
 
 # --------------------------------------------------
