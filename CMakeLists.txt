@@ -45,9 +45,20 @@ message(STATUS "ITK_DIR=${ITK_DIR} pybind11_DIR=${pybind11_DIR}")
 # --------------------------------------------------
 #             build settings
 # --------------------------------------------------
+if(APPLE)
+   set(CMAKE_C_COMPILER "/usr/bin/clang")
+   set(CMAKE_CXX_COMPILER "/usr/bin/clang++")
+   # set -DAPPLE_ARM64=ON on cmake command line for arm64 build
+   if(APPLE_ARM64)
+      set(CMAKE_OSX_ARCHITECTURES "arm64")
+       add_definitions(-DARM64 -DDarwin -DPNG_ARM_NEON_OPT=0)
+   endif()
+endif()
 
 # warnings
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Werror -Wno-absolute-value -Wno-sign-compare -Wno-write-strings -Wno-unused-result -Wno-unused-parameter")
+if(NOT APPLE_ARM64)
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Werror -Wno-absolute-value -Wno-sign-compare -Wno-write-strings -Wno-unused-result -Wno-unused-parameter")
+endif()
 
 # clang complains about -Wno-unused-but-set-variable and says to use -Wno-unused-const-variable
 if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
@@ -74,6 +85,10 @@ if(PROFILING)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pg")
   set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -pg")
 endif()
+
+message(STATUS "C/C++ standard set to ${CMAKE_CXX_STANDARD}, CMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER}, CMAKE_CXX_COMPILER_ID=${CMAKE_CXX_COMPILER_ID}, CMAKE_CXX_FLAGS=${CMAKE_CXX_FLAGS}")
+message(STATUS "For HOST_OS=${HOST_OS} CMAKE_CXX_COMPILER_ID=${CMAKE_CXX_COMPILER_ID}")
+message(STATUS "For HOST_OS=${HOST_OS} CMAKE_CXX_FLAGS=${CMAKE_CXX_FLAGS}")
 
 # --------------------------------------------------
 #                 build samseg

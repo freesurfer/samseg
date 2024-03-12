@@ -24,7 +24,7 @@ class build_ext_(build_ext):
                 '-H.'
             ]
             # Pass environment variables to CMake
-            for k in ['ITK_DIR', 'ZLIB_INCLUDE_DIR', 'ZLIB_LIBRARY']:
+            for k in ['ITK_DIR', 'ZLIB_INCLUDE_DIR', 'ZLIB_LIBRARY', 'pybind11_DIR', 'CMAKE_C_COMPILER', 'CMAKE_CXX_COMPILER', 'APPLE_ARM64', 'CMAKE_VERBOSE_MAKEFILE', 'CMAKE_RULE_MESSAGES']:
                 try:
                     path = os.path.abspath(os.environ[k].replace('"', ''))
                 except KeyError:
