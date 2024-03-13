@@ -30,10 +30,14 @@ set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${GEMS_RUNTIME_PATH})
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${GEMS_RUNTIME_PATH})
 
 set(CMAKE_CXX_STANDARD 11)
-set(CMAKE_CXX_FLAGS "-fPIC -fpermissive -msse2 -mfpmath=sse")
+if(NOT APPLE_ARM64)
+  set(CMAKE_CXX_FLAGS "-fPIC -fpermissive -msse2 -mfpmath=sse")
+endif()
 
-# SC 2023/04/04: Commented out as it causes problem with Windows build
-# add_compile_options(-Wno-inconsistent-missing-override -Wno-self-assign-field)
+if(NOT WIN32)
+  # SC 2023/04/04: Commented out as it causes problem with Windows build
+  add_compile_options(-Wno-inconsistent-missing-override -Wno-self-assign-field)
+endif()
 
 # to set additional debug cxxflags:
 #   export GEMS_DEBUG_CXXFLAG="-DGEMS_DEBUG_RASTERIZE_VOXEL_COUNT"
@@ -157,6 +161,8 @@ set(SOURCES_DYN
   kvlMutualInformationCostAndGradientCalculator.cxx
   kvlAtlasMeshJacobianDeterminantDrawer.cxx
 )
+
+message(WARNING "ZLIB_LIBRARIES=${ZLIB_LIBRARIES} ITK_LIBRARIES=${ITK_LIBRARIES}")
 
 # gems libary
 add_library(kvlGEMSCommon ${SOURCES})
