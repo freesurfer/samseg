@@ -45,15 +45,13 @@ message(STATUS "ITK_DIR=${ITK_DIR} pybind11_DIR=${pybind11_DIR}")
 # --------------------------------------------------
 #             build settings
 # --------------------------------------------------
-if(APPLE)
-   set(CMAKE_C_COMPILER "/usr/bin/clang")
-   set(CMAKE_CXX_COMPILER "/usr/bin/clang++")
-   # set -DAPPLE_ARM64=ON on cmake command line for arm64 build
-   if(APPLE_ARM64)
-      set(CMAKE_OSX_ARCHITECTURES "arm64")
-       add_definitions(-DARM64 -DDarwin -DPNG_ARM_NEON_OPT=0)
-   endif()
+# set -DAPPLE_ARM64=ON on cmake command line for arm64 build
+# when building with freesurfer, CMAKE_C_COMPILER and CMAKE_CXX_COMPILER will be specified on the cmake command line
+if(APPLE_ARM64)
+  set(CMAKE_OSX_ARCHITECTURES "arm64")
+  add_definitions(-DARM64 -DDarwin -DPNG_ARM_NEON_OPT=0)
 endif()
+message(STATUS "CMAKE_C_COMPILER=${CMAKE_C_COMPILER}, CMAKE_C_COMPILER_ID=${CMAKE_C_COMPILER_ID}, CMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER}, CMAKE_CXX_COMPILER_ID=${CMAKE_CXX_COMPILER_ID}")
 
 # warnings
 if(NOT APPLE_ARM64)
@@ -62,7 +60,7 @@ endif()
 
 # clang complains about -Wno-unused-but-set-variable and says to use -Wno-unused-const-variable
 if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-unused-const-variable -Wno-inconsistent-missing-override")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-non-c-typedef-for-linkage -Wno-unused-const-variable -Wno-inconsistent-missing-override -Wno-self-assign-field -Wno-tautological-overlap-compare -Wno-tautological-compare -Wno-unused-value -Wno-range-loop-analysis -Wno-return-stack-address -Wno-dangling-gsl")
 else()
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-unused-but-set-variable")
 endif()
@@ -86,7 +84,7 @@ if(PROFILING)
   set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -pg")
 endif()
 
-message(STATUS "C/C++ standard set to ${CMAKE_CXX_STANDARD}, CMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER}, CMAKE_CXX_COMPILER_ID=${CMAKE_CXX_COMPILER_ID}, CMAKE_CXX_FLAGS=${CMAKE_CXX_FLAGS}")
+message(STATUS "C/C++ standard set to ${CMAKE_CXX_STANDARD}, CMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER}")
 message(STATUS "For HOST_OS=${HOST_OS} CMAKE_CXX_COMPILER_ID=${CMAKE_CXX_COMPILER_ID}")
 message(STATUS "For HOST_OS=${HOST_OS} CMAKE_CXX_FLAGS=${CMAKE_CXX_FLAGS}")
 
