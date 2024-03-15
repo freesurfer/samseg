@@ -178,7 +178,7 @@ class SamsegLongitudinal:
         self.historyOfTotalTimepointCost = None
         self.historyOfLatentAtlasCost = None
 
-    def segment(self, saveWarp=False, initTransformFile=None)):
+    def segment(self, saveWarp=False, initTransformFile=None):
         # =======================================================================================
         #
         # Main function that runs the whole longitudinal segmentation pipeline
