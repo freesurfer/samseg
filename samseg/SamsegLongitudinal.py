@@ -113,6 +113,7 @@ class SamsegLongitudinal:
         self.pallidumAsWM = pallidumAsWM
         self.savePosteriors = savePosteriors
         self.tpToBaseTransforms = tpToBaseTransforms
+        self.saveModelProbabilities = saveModelProbabilities
 
         # Check if all time point to base transforms are identity matrices.
         # If so, we can derive a combined 4D mask during preprocessing
@@ -177,23 +178,29 @@ class SamsegLongitudinal:
         self.historyOfTotalTimepointCost = None
         self.historyOfLatentAtlasCost = None
 
-    def segment(self, saveWarp=False):
+    def segment(self, saveWarp=False, initTransformFile=None)):
         # =======================================================================================
         #
         # Main function that runs the whole longitudinal segmentation pipeline
         #
         # =======================================================================================
-        self.constructAndRegisterSubjectSpecificTemplate()
+        self.constructAndRegisterSubjectSpecificTemplate(initTransformFile)
         self.preProcess()
         self.fitModel()
         return self.postProcess(saveWarp=saveWarp)
 
-    def constructAndRegisterSubjectSpecificTemplate(self):
+    def constructAndRegisterSubjectSpecificTemplate(self, initTransformFile=None):
         # =======================================================================================
         #
         # Construction and affine registration of subject-specific template (sst)
         #
         # =======================================================================================
+
+        # Initialization transform for registration
+        initTransform = None
+        if initTransformFile:
+            trg = self.validateTransform(sf.load_affine(initTransformFile))
+            initTransform = convertRASTransformToLPS(trg.convert(space='world').matrix)
 
         # Generate the subject specific template (sst)
         self.sstFileNames = self.generateSubjectSpecificTemplate()
@@ -208,7 +215,7 @@ class SamsegLongitudinal:
             affine = Affine(imageFileName=self.sstFileNames[0],
                              meshCollectionFileName=affineRegistrationMeshCollectionFileName,
                              templateFileName=templateFileName)
-            self.imageToImageTransformMatrix, _ = affine.registerAtlas(savePath=sstDir, visualizer=self.visualizer)
+            self.imageToImageTransformMatrix, _ = affine.registerAtlas(savePath=sstDir, visualizer=self.visualizer, initTransform=initTransform)
 
 
     def preProcess(self):
@@ -752,6 +759,17 @@ class SamsegLongitudinal:
         # Using estimated parameters, segment and write out results for each time point
         #
         # =======================================================================================
+        #
+
+        sstDir = os.path.join(self.savePath, 'base')
+        os.makedirs(sstDir, exist_ok=True)
+        baseModel = self.sstModel;
+        # Save the final mesh collection
+        if self.saveModelProbabilities:
+            print('Saving base model probs')
+            baseModel.saveGaussianProbabilities(os.path.join(sstDir, 'probabilities') )
+        if saveWarp:
+            baseModel.saveWarpField(os.path.join(sstDir, 'template.m3z'))
 
         self.timepointVolumesInCubicMm = []
         for timepointNumber in range(self.numberOfTimepoints):
@@ -785,7 +803,10 @@ class SamsegLongitudinal:
                 deformedAtlasFileName = os.path.join(timepointModel.savePath, 'mesh.txt')
                 timepointModel.probabilisticAtlas.saveDeformedAtlas(timepointModel.modelSpecifications.atlasFileName,
                                                                     deformedAtlasFileName, nodePositions)
-
+            if self.saveModelProbabilities:
+                print('Saving model probs')
+                timepointModel.saveGaussianProbabilities( os.path.join(timepointModel.savePath, 'probabilities') )
+                                                                                                          
             # Save the history of the parameter estimation process
             if self.saveHistory:
                 history = {'input': {
@@ -821,7 +842,7 @@ class SamsegLongitudinal:
             with open(os.path.join(self.savePath, 'history.p'), 'wb') as file:
                 pickle.dump(self.history, file, protocol=pickle.HIGHEST_PROTOCOL)
 
-    def generateSubjectSpecificTemplate(self):
+    def generateSubjectSpecificTemplate(self, saveWarp=False):
 
         sstDir = os.path.join(self.savePath, 'base')
         os.makedirs(sstDir, exist_ok=True)
@@ -866,6 +887,7 @@ class SamsegLongitudinal:
             userOptimizationOptions=self.userOptimizationOptions,
             visualizer=self.visualizer,
             saveHistory=True,
+            savePosteriors=self.savePosteriors,
             targetIntensity=self.targetIntensity,
             targetSearchStrings=self.targetSearchStrings,
             modeNames=self.modeNames,
