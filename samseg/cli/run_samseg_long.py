@@ -5,6 +5,7 @@ import shutil
 import os
 import argparse
 import surfa as sf
+import json
 import samseg 
 import numpy as np
 from samseg import SAMSEGDIR
@@ -31,8 +32,10 @@ def parseArguments(argv):
     # optional processing options
     parser.add_argument('-m', '--mode', nargs='+', help='Output basenames for the input image mode.')
     parser.add_argument('-a', '--atlas', metavar='DIR', help='Point to an alternative atlas directory.')
+    parser.add_argument('--init-reg', metavar='FILE', help='Initial affine registration.')
     parser.add_argument('--deformation-hyperprior', type=float, default=20.0, help='Strength of the latent deformation hyperprior.')
     parser.add_argument('--gmm-hyperprior', type=float, default=0.5, help='Strength of the latent GMM hyperprior.')
+    parser.add_argument('--options', metavar='FILE', help='Override advanced options via a json file.')
     parser.add_argument('--pallidum-separate', action='store_true', default=False, help='Move pallidum outside of global white matter class. Use this flag when T2/flair is used.')
     parser.add_argument('--threads', type=int, default=default_threads, help='Number of threads to use. Defaults to current OMP_NUM_THREADS or 1.')
     parser.add_argument('--tp-to-base-transform', nargs='+', required=False, help='Transformation file for each time point to base.')
@@ -94,6 +97,17 @@ def main():
 
     # Setup the visualization tool
     visualizer = samseg.initVisualizer(args.showfigs, args.movie)
+
+    # Load user options from a JSON file
+    userModelSpecifications = {}
+    userOptimizationOptions = {}
+    if args.options: 
+        with open(args.options) as f:
+            userOptions = json.load(f)
+        if userOptions.get('modelSpecifications') is not None:
+            userModelSpecifications = userOptions.get('modelSpecifications')
+        if userOptions.get('optimizationOptions') is not None:
+            userOptimizationOptions = userOptions.get('optimizationOptions')
 
     # Start the process timer
     timer = samseg.Timer()
@@ -164,6 +178,8 @@ def main():
         imageFileNamesList=args.timepoint,
         atlasDir=atlasDir,
         savePath=args.output,
+        userModelSpecifications=userModelSpecifications,
+        userOptimizationOptions=userOptimizationOptions,
         targetIntensity=110,
         targetSearchStrings=['Cerebral-White-Matter'],
         modeNames=args.mode,
@@ -200,7 +216,7 @@ def main():
     else:
         samsegLongitudinal = samseg.SamsegLongitudinal(**samseg_kwargs)
 
-    samsegLongitudinal.segment(saveWarp=args.save_warp)
+    samsegLongitudinal.segment(saveWarp=args.save_warp, initTransformFile=args.init_reg)
 
     timer.mark('run_samseg_long complete')
 
