@@ -170,14 +170,14 @@ void RegisterImages<TransformationType, MetricType>
        optimizer->SetScalesEstimator(scalesEstimator);
     }
 
+    //Could be skipped if we don't need to test
+    constexpr int randomNumberGeneratorSeed = 121213;
+    registration->MetricSamplingReinitializeSeed(randomNumberGeneratorSeed);
+
     //Set sampling strategy
     typename RegistrationType::MetricSamplingStrategyType samplingStrategy = RegistrationType::RANDOM;
     registration->SetMetricSamplingStrategy(samplingStrategy);
     registration->SetMetricSamplingPercentage(m_SamplingPercentage);
-
-    //Could be skipped if we don't need to test
-    constexpr int randomNumberGeneratorSeed = 121213;
-    registration->MetricSamplingReinitializeSeed(randomNumberGeneratorSeed);
 
 
     //Add the observer
