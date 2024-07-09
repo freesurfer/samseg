@@ -2,7 +2,7 @@ import os
 import scipy.ndimage
 import numpy as np
 import surfa as sf
-from samseg import gems
+from samseg.io import kvlReadCompressionLookupTable
 
 
 def run(cmd):
@@ -36,7 +36,7 @@ def read_compression_lookup_table(filename):
     object down the road.
     """
     labelMapping = sf.LabelLookup()
-    labels, names, colors = gems.kvlReadCompressionLookupTable(filename)
+    labels, names, colors = kvlReadCompressionLookupTable(filename)
     labels = np.array(labels)
     for label, name, color in zip(labels, names, colors):
         labelMapping[label] = (name, color)
