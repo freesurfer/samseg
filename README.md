@@ -30,6 +30,8 @@ Most of the functionalities of SAMSEG do not require [FreeSurfer](https://freesu
 `git submodule init`
 `git submodule update`
 
+Note that when you switch between branches with different submodule versions (such as dev and itk_update), you can call `git checkout <branch> --recurse-submodules` to have the submodules automatically updated.
+
 3. Create a virtual environment using, e.g., conda:
 `conda create -n samseg python=3.9`
 
