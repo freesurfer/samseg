@@ -2,7 +2,7 @@ name: MacOS Build
 
 on:
   push:
-    branches: [ dev ]
+    branches: [ dev, itk_update ]
     tags:
       - v*
   pull_request:
