@@ -853,12 +853,12 @@ class SamsegLongitudinal:
             # Read in the various time point images, and compute the average
             numberOfTimepoints = len(contrastImageFileNames)
             image0 = sf.load_volume(contrastImageFileNames[0])
-            imageBuffer = image0.transform(self.tpToBaseTransforms[0])
+            imageBuffer = image0.transform(sf.Affine(self.tpToBaseTransforms[0]))
             # Make sure that we are averaging only non zero voxels
             count = np.zeros(imageBuffer.shape)
             count[imageBuffer > 0] += 1
             for timepointNumber in range(1, numberOfTimepoints):
-                tmp = sf.load_volume(contrastImageFileNames[timepointNumber]).transform(self.tpToBaseTransforms[timepointNumber]).data
+                tmp = sf.load_volume(contrastImageFileNames[timepointNumber]).transform(sf.Affine(self.tpToBaseTransforms[timepointNumber])).data
                 imageBuffer += tmp
                 count[tmp > 0] += 1
             # Make sure that we are not dividing by zero for, e.g., background voxels

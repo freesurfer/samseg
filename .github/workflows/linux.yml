@@ -11,11 +11,11 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-    container: quay.io/pypa/manylinux2014_x86_64
+    container: quay.io/pypa/manylinux_2_28_x86_64
     if: ${{ startsWith(github.ref, 'refs/tags') || !contains(github.event.head_commit.message, '[skip ci]') }}
 
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v4
       
     - name: Checkout submodules
       run: | 
@@ -23,22 +23,20 @@ jobs:
         git submodule init
         git submodule update
 
-    - name: Download gcc 8 compilers
+    - name: Download gcc 10 compilers
       run: |
-       yum install -y centos-release-scl && \
-       yum-config-manager --enable rhel-server-rhscl-7-rpms && \
-       yum install -y devtoolset-8
+       yum install -y gcc-toolset-10
 
-    - name: Install CMake and Zlib
-      run: | 
-        yum install -y cmake3 zlib-devel
-        ln -s /usr/bin/cmake3 /usr/bin/cmake
-        
+    # - name: Install CMake and Zlib
+    #   run: |
+    #     yum install -y cmake3 zlib-devel
+    #     ln -s /usr/bin/cmake3 /usr/bin/cmake
+
     - name: Build ITK
       run: |
 
-        export CC=/opt/rh/devtoolset-8/root/usr/bin/gcc
-        export CXX=/opt/rh/devtoolset-8/root/usr/bin/g++
+        # export CC=/opt/rh/devtoolset-8/root/usr/bin/gcc
+        # export CXX=/opt/rh/devtoolset-8/root/usr/bin/g++
 
         mkdir ITK-build
         cd ITK-build
@@ -55,8 +53,8 @@ jobs:
     - name: Build samseg and run tests
       run: |
 
-        export CC=/opt/rh/devtoolset-8/root/usr/bin/gcc
-        export CXX=/opt/rh/devtoolset-8/root/usr/bin/g++
+        # export CC=/opt/rh/devtoolset-8/root/usr/bin/gcc
+        # export CXX=/opt/rh/devtoolset-8/root/usr/bin/g++
 
         .github/workflows/linux_build.sh /opt/python/cp38-cp38/bin/python
         .github/workflows/linux_build.sh /opt/python/cp39-cp39/bin/python
@@ -67,7 +65,7 @@ jobs:
         ITK_DIR: ITK-install
 
     - name: Upload artifact
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v4
       with:
         name: linux-wheels
         path: wheelhouse/*.whl

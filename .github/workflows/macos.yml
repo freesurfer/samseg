@@ -9,12 +9,16 @@ on:
     branches: [ dev ]
 
 jobs:
-  build:
-    runs-on: macos-latest
-    if: ${{ startsWith(github.ref, 'refs/tags') || !contains(github.event.head_commit.message, '[skip ci]') }}
+  example_matrix:
+    strategy:
+      matrix:
+        os: [macos-latest, macos-13]
+
+    runs-on: ${{ matrix.os }}
 
     steps:
-    - uses: actions/checkout@v2
+    - name: Checkout code
+      uses: actions/checkout@v4
     
     - name: Install Python
       run: |
@@ -64,7 +68,7 @@ jobs:
         ZLIB_LIBRARY: zlib-install/lib/libz.a
 
     - name: Upload artifact
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v4
       with:
         name: macos-wheels
         path: dist/*.whl

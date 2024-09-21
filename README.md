@@ -37,7 +37,7 @@ Most of the functionalities of SAMSEG do not require [FreeSurfer](https://freesu
 `conda activate samseg`
 
 5. Install correct compilers for ITK v.4.13.2
-`conda install -c conda-forge gxx_linux-64=7.5 gcc_linux-64=7.5 sysroot_linux-64=2.17`
+`conda install -c conda-forge gcc==10.4 gxx==10.4`
 
 6. Create the ITK build directory
 `mkdir ITK-build`
