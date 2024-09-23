@@ -65,7 +65,7 @@ jobs:
         # cpython version string representation, e.g., 3.11 -> cp311
         PYTHON_VERSION_STR=$(python -c "import sys; print(f'cp{sys.version_info.major}{sys.version_info.minor}')")
 
-        python -m pip install cibuilwheel
+        python -m pip install cibuildwheel
         python -m cibuildwheel --output-dir ./dist
         rm samseg/gems/*.so
       env:

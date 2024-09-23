@@ -64,6 +64,7 @@ jobs:
       env:
         ZLIB_INCLUDE_DIR: .\zlib-install\include
         ZLIB_LIBRARY: .\zlib-install\lib\zlibstatic.lib
+        ITK_DIR: ITK-build
 
     - name: Upload artifact
       uses: actions/upload-artifact@v4
