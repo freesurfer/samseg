@@ -64,12 +64,13 @@ jobs:
       run: |
         # cpython version string representation, e.g., 3.11 -> cp311
         PYTHON_VERSION_STR=$(python -c "import sys; print(f'cp{sys.version_info.major}{sys.version_info.minor}')")
+        echo "PYTHON_VERSION_STR=${PYTHON_VERSION_STR}" >> $GITHUB_ENV
 
         python -m pip install cibuildwheel
         python -m cibuildwheel --output-dir ./dist
         rm samseg/gems/*.so
       env:
-        CIBW_BUILD: ${PYTHON_VERSION_STR}-*
+        CIBW_BUILD: ${{ env.PYTHON_VERSION_STR }}-*
         CIBW_BUILD_FRONTEND: "pip; args: --no-deps" # additional args
         MACOSX_DEPLOYMENT_TARGET: "14.0"
         ITK_DIR: ITK-install
