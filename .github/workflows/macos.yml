@@ -14,6 +14,7 @@ jobs:
     strategy:
       matrix:
         os: [macos-latest, macos-13]
+        python-version: ["3.8", "3.9", "3.10", "3.11"]
 
     runs-on: ${{ matrix.os }}
 
@@ -21,14 +22,11 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v4
     
-    - name: Install Python
-      run: |
+    - name: Set up python versions ${{ matrix.python-version }}
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ matrix.python-version }}
 
-        brew install python@3.8
-        brew install python@3.9
-        brew install python@3.10
-        brew install python@3.11
-        
     - name: Checkout submodules
       run: | 
         git submodule init
@@ -57,12 +55,14 @@ jobs:
         make install
         cd ..
 
-    - name: Build samseg
+    - name: Build samseg for python version ${{ matrix.python-version }} and test
       run: |
-        .github/workflows/macos_build.sh /usr/local/bin/python3.8
-        .github/workflows/macos_build.sh /usr/local/bin/python3.9
-        .github/workflows/macos_build.sh /usr/local/bin/python3.10
-        .github/workflows/macos_build.sh /usr/local/bin/python3.11
+        python -m pip wheel . -w ./dist --no-deps
+        python -m pip install samseg -f dist/
+        python -m pip install pytest
+        python -m pip install tensorflow
+        python -m pytest samseg/tests
+        rm samseg/gems/*.so
       env:
         ITK_DIR: ITK-install
         ZLIB_INCLUDE_DIR: zlib-install/include
