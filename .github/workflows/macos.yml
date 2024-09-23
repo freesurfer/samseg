@@ -13,7 +13,7 @@ jobs:
   example_matrix:
     strategy:
       matrix:
-        os: [macos-latest, macos-12]
+        os: [macos-latest, macos-13]
         python-version: ["3.8", "3.9", "3.10", "3.11"]
 
     runs-on: ${{ matrix.os }}
@@ -62,17 +62,30 @@ jobs:
 
     - name: Build samseg for python version ${{ matrix.python-version }} and test
       run: |
-        python -m pip wheel . -w ./dist --no-deps
-        python -m pip install samseg -f dist/
-        python -m pip install pytest
-        python -m pip install tensorflow
-        python -m pytest samseg/tests
+        # cpython version string representation, e.g., 3.11 -> cp311
+        PYTHON_VERSION_STR=$(python -c "import sys; print(f'cp{sys.version_info.major}{sys.version_info.minor}')")
+
+        python -m pip install cibuilwheel
+        python -m cibuildwheel --output-dir ./dist
         rm samseg/gems/*.so
       env:
+        CIBW_BUILD: ${{ PYTHON_VERSION_STR }}-*
+        CIBW_BUILD_FRONTEND: "pip; args: --no-deps" # additional args
+        MACOSX_DEPLOYMENT_TARGET: "14.0"
         ITK_DIR: ITK-install
         ZLIB_INCLUDE_DIR: zlib-install/include
         ZLIB_LIBRARY: zlib-install/lib/libz.a
         APPLE_ARM64: $IS_ARM
+
+    - name: Install the wheel and test dependencies
+      run: |
+        python -m pip install samseg -f ./dist
+        python -m pip install pytest
+        python -m pip install tensorflow
+
+    - name: Test the installation
+      run: |
+        python -m pytest samseg/tests
 
     - name: Upload artifact
       uses: actions/upload-artifact@v4
