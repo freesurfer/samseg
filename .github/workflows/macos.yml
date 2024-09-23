@@ -55,6 +55,11 @@ jobs:
         make install
         cd ..
 
+    - name: Detect if arm and set build variable if yes
+      if: runner.arch == 'ARM64' || runner.arch == 'ARM64'
+      run: |
+        IS_ARM=ON
+
     - name: Build samseg for python version ${{ matrix.python-version }} and test
       run: |
         python -m pip wheel . -w ./dist --no-deps
@@ -67,6 +72,7 @@ jobs:
         ITK_DIR: ITK-install
         ZLIB_INCLUDE_DIR: zlib-install/include
         ZLIB_LIBRARY: zlib-install/lib/libz.a
+        APPLE_ARM64: $IS_ARM
 
     - name: Upload artifact
       uses: actions/upload-artifact@v4
