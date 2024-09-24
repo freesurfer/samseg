@@ -66,6 +66,8 @@ jobs:
         echo "_PYTHON_HOST_PLATFORM=${_PYTHON_HOST_PLATFORM}" >> $GITHUB_ENV
         ARCHFLAGS="-arch arm64"
         echo "ARCHFLAGS=${ARCHFLAGS=}" >> $GITHUB_ENV
+        PYTHON_VERSION_STR=$(python -c "import sys;print(f'cp{sys.version_info.major}{sys.version_info.minor}')")
+        echo "PYTHON_VERSION_STR=${PYTHON_VERSION_STR}" >> $GITHUB_ENV
 
     - name: Detect if x64 and set build variables
       if: runner.arch == 'x64'
@@ -81,7 +83,7 @@ jobs:
 
     - name: Build samseg for python version ${{ matrix.python-version }} and test
       run: |
-        python -m pip wheel . -w ./dist --no-deps
+        python -m pip wheel . -w ./dist-${PYTHON_VERSION_STR}-${_PYTHON_HOST_PLATFORM} --no-deps
       env:
         ITK_DIR: ITK-install
         ZLIB_INCLUDE_DIR: zlib-install/include
@@ -93,7 +95,7 @@ jobs:
 
     - name: Install the wheel and test dependencies
       run: |
-        python -m pip install samseg -f ./dist
+        python -m pip install samseg -f ./dist-${PYTHON_VERSION_STR}-${_PYTHON_HOST_PLATFORM}
         python -m pip install pytest
         python -m pip install tensorflow
         python -m pytest samseg/tests
