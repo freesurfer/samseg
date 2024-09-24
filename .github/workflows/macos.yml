@@ -58,7 +58,7 @@ jobs:
     - name: Detect if arm and set build variables
       if: runner.arch == 'ARM64' || runner.arch == 'ARM64'
       run: |
-        IS_ARM=ON
+        APPLE_ARM64=ON
         MACOSX_DEPLOYMENT_TARGET="14.0"
         _PYTHON_HOST_PLATFORM="macosx-14.0-arm64"
         ARCHFLAGS="-arch arm64"
@@ -66,7 +66,7 @@ jobs:
     - name: Detect if x64 and set build variables
       if: runner.arch == 'x64'
       run: |
-        IS_ARM=OFF
+        APPLE_ARM64=OFF
         MACOSX_DEPLOYMENT_TARGET="13.0"
         _PYTHON_HOST_PLATFORM="macosx-13.0-x86_64"
         ARCHFLAGS="-arch x86_64"
@@ -79,16 +79,12 @@ jobs:
         ITK_DIR: ITK-install
         ZLIB_INCLUDE_DIR: zlib-install/include
         ZLIB_LIBRARY: zlib-install/lib/libz.a
-        APPLE_ARM64: $IS_ARM
 
     - name: Install the wheel and test dependencies
       run: |
         python -m pip install samseg -f ./dist
         python -m pip install pytest
         python -m pip install tensorflow
-
-    - name: Test the installation
-      run: |
         python -m pytest samseg/tests
 
     - name: Upload artifact
