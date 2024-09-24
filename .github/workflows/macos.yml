@@ -79,6 +79,7 @@ jobs:
         ITK_DIR: ITK-install
         ZLIB_INCLUDE_DIR: zlib-install/include
         ZLIB_LIBRARY: zlib-install/lib/libz.a
+        APPLE_ARM64: $APPLE_ARM64
 
     - name: Install the wheel and test dependencies
       run: |
