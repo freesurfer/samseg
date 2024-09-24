@@ -13,7 +13,7 @@ jobs:
   example_matrix:
     strategy:
       matrix:
-        os: [macos-latest, macos-13]
+        os: [macos-latest, macos-12]
         python-version: ["3.8", "3.9", "3.10", "3.11"]
 
     runs-on: ${{ matrix.os }}
@@ -26,12 +26,6 @@ jobs:
       uses: actions/setup-python@v5
       with:
         python-version: ${{ matrix.python-version }}
-
-    - name: Get python version for python ${{ matrix.python-version }}
-      run: |
-        PYTHON_VERSION_STR=$(python -c "import sys; print(f'cp{sys.version_info.major}{sys.version_info.minor}')")
-        echo $PYTHON_VERSION_STR
-        echo "PYTHON_VERSION_STR=${PYTHON_VERSION_STR}" >> $GITHUB_ENV
 
     - name: Checkout submodules
       run: | 
@@ -61,22 +55,27 @@ jobs:
         make install
         cd ..
 
-    - name: Detect if arm and set build variable if yes
+    - name: Detect if arm and set build variables
       if: runner.arch == 'ARM64' || runner.arch == 'ARM64'
       run: |
         IS_ARM=ON
+        MACOSX_DEPLOYMENT_TARGET="14.0"
+        _PYTHON_HOST_PLATFORM="macosx-14.0-arm64"
+        ARCHFLAGS="-arch arm64"
+
+    - name: Detect if x64 and set build variables
+      if: runner.arch == 'x64'
+      run: |
+        IS_ARM=OFF
+        MACOSX_DEPLOYMENT_TARGET="13.0"
+        _PYTHON_HOST_PLATFORM="macosx-13.0-x86_64"
+        ARCHFLAGS="-arch x86_64"
 
     - name: Build samseg for python version ${{ matrix.python-version }} and test
       run: |
-        # cpython version string representation, e.g., 3.11 -> cp311
-
-        python -m pip install cibuildwheel
-        python -m cibuildwheel --output-dir ./dist
+        python -m pip wheel . -w ./dist --no-deps
         rm samseg/gems/*.so
       env:
-        CIBW_BUILD: ${{ env.PYTHON_VERSION_STR }}-*
-        CIBW_BUILD_FRONTEND: "pip; args: --no-deps" # additional args
-        MACOSX_DEPLOYMENT_TARGET: "14.0"
         ITK_DIR: ITK-install
         ZLIB_INCLUDE_DIR: zlib-install/include
         ZLIB_LIBRARY: zlib-install/lib/libz.a
