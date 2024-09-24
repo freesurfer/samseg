@@ -59,17 +59,25 @@ jobs:
       if: runner.arch == 'ARM64' || runner.arch == 'ARM64'
       run: |
         APPLE_ARM64=ON
+        echo "APPLE_ARM64=${APPLE_ARM64}" >> $GITHUB_ENV
         MACOSX_DEPLOYMENT_TARGET="14.0"
+        echo "MACOSX_DEPLOYMENT_TARGET=${MACOSX_DEPLOYMENT_TARGET}" >> $GITHUB_ENV
         _PYTHON_HOST_PLATFORM="macosx-14.0-arm64"
+        echo "_PYTHON_HOST_PLATFORM=${_PYTHON_HOST_PLATFORM}" >> $GITHUB_ENV
         ARCHFLAGS="-arch arm64"
+        echo "ARCHFLAGS=${ARCHFLAGS=}" >> $GITHUB_ENV
 
     - name: Detect if x64 and set build variables
       if: runner.arch == 'x64'
       run: |
         APPLE_ARM64=OFF
+        echo "APPLE_ARM64=${APPLE_ARM64}" >> $GITHUB_ENV
         MACOSX_DEPLOYMENT_TARGET="13.0"
+        echo "MACOSX_DEPLOYMENT_TARGET=${MACOSX_DEPLOYMENT_TARGET}" >> $GITHUB_ENV
         _PYTHON_HOST_PLATFORM="macosx-13.0-x86_64"
+        echo "_PYTHON_HOST_PLATFORM=${_PYTHON_HOST_PLATFORM}" >> $GITHUB_ENV
         ARCHFLAGS="-arch x86_64"
+        echo "ARCHFLAGS=${ARCHFLAGS=}" >> $GITHUB_ENV
 
     - name: Build samseg for python version ${{ matrix.python-version }} and test
       run: |
@@ -78,10 +86,10 @@ jobs:
         ITK_DIR: ITK-install
         ZLIB_INCLUDE_DIR: zlib-install/include
         ZLIB_LIBRARY: zlib-install/lib/libz.a
-        APPLE_ARM64: $APPLE_ARM64
-        MACOSX_DEPLOYMENT_TARGET: $MACOSX_DEPLOYMENT_TARGET
-        _PYTHON_HOST_PLATFORM: $_PYTHON_HOST_PLATFORM
-        ARCHFLAGS: $ARCHFLAGS
+        APPLE_ARM64: ${{ env.APPLE_ARM64 }}
+        MACOSX_DEPLOYMENT_TARGET: ${{ env.MACOSX_DEPLOYMENT_TARGET }}
+        _PYTHON_HOST_PLATFORM: ${{ env._PYTHON_HOST_PLATFORM }}
+        ARCHFLAGS: ${{ env.ARCHFLAGS }}
 
     - name: Install the wheel and test dependencies
       run: |
