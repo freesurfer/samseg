@@ -86,7 +86,6 @@ jobs:
         python -m pip install pytest
         python -m pip install tensorflow
         python -m pytest samseg/tests
-        rm charm_gems/*.so gems_python/*.so
 
     - name: Upload artifact
       uses: actions/upload-artifact@v4
