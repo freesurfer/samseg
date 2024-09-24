@@ -74,7 +74,6 @@ jobs:
     - name: Build samseg for python version ${{ matrix.python-version }} and test
       run: |
         python -m pip wheel . -w ./dist --no-deps
-        rm samseg/gems/*.so
       env:
         ITK_DIR: ITK-install
         ZLIB_INCLUDE_DIR: zlib-install/include
@@ -87,6 +86,7 @@ jobs:
         python -m pip install pytest
         python -m pip install tensorflow
         python -m pytest samseg/tests
+        rm charm_gems/*.so gems_python/*.so
 
     - name: Upload artifact
       uses: actions/upload-artifact@v4
