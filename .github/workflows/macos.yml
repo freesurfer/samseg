@@ -13,7 +13,7 @@ jobs:
   example_matrix:
     strategy:
       matrix:
-        os: [macos-latest, macos-12]
+        os: [macos-latest, macos-13]
         python-version: ["3.8", "3.9", "3.10", "3.11"]
 
     runs-on: ${{ matrix.os }}
@@ -80,6 +80,8 @@ jobs:
         echo "_PYTHON_HOST_PLATFORM=${_PYTHON_HOST_PLATFORM}" >> $GITHUB_ENV
         ARCHFLAGS="-arch x86_64"
         echo "ARCHFLAGS=${ARCHFLAGS=}" >> $GITHUB_ENV
+        PYTHON_VERSION_STR=$(python -c "import sys;print(f'cp{sys.version_info.major}{sys.version_info.minor}')")
+        echo "PYTHON_VERSION_STR=${PYTHON_VERSION_STR}" >> $GITHUB_ENV
 
     - name: Build samseg for python version ${{ matrix.python-version }} and test
       run: |
@@ -104,13 +106,13 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: macos-wheels
-        path: dist/*.whl
+        path: dist-${PYTHON_VERSION_STR}-${_PYTHON_HOST_PLATFORM}/*.whl
 
     - name: Upload to PyPI
       if: ${{ github.event_name == 'push' && startsWith(github.ref, 'refs/tags') }}
       run: |
         $PYTHON -m pip install twine
-        $PYTHON -m twine upload dist/*.whl -u __token__ -p "$PASSWORD"
+        $PYTHON -m twine upload dist-${PYTHON_VERSION_STR}-${_PYTHON_HOST_PLATFORM}/*.whl -u __token__ -p "$PASSWORD"
       env:
         PASSWORD: ${{ secrets.PYPI_TOKEN }}
         PYTHON: /Library/Frameworks/Python.framework/Versions/3.8/bin/python3
