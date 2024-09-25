@@ -64,7 +64,8 @@ jobs:
         # python -m pytest samseg\samseg\tests
         
         rm samseg\gems\*.pyd
-        rm samseg\gems\Release\*.pyd
+        rm samseg\samseg\gems\Release\*.pyd
+
       env:
         ZLIB_INCLUDE_DIR: .\zlib-install\include
         ZLIB_LIBRARY: .\zlib-install\lib\zlibstatic.lib

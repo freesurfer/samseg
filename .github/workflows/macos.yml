@@ -142,7 +142,7 @@ jobs:
         python -m pip install samseg*.whl
         python -m pip install pytest
         python -m pip install tensorflow
-        pytest tests -v
+        python -m pytest samseg
 
   publish:
     name: Publish the wheel
