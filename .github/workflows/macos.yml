@@ -107,34 +107,34 @@ jobs:
     name: Test the wheel
     needs: build
     strategy:
-      max-parallel: 1
-      matrix:
+    max-parallel: 1
+    matrix:
         os: [macos-latest, macos-13]
         python-version: ["3.8", "3.9", "3.10", "3.11"]
 
     runs-on: ${{ matrix.os }}
 
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+    - name: Checkout
+      uses: actions/checkout@v4
 
-      - name: Download artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: macos-wheels
-          path: ${{ github.workspace }}
-
-    - name: Python - set up ${{ matrix.python-version }}
-      uses: actions/setup-python@v5
+    - name: Download artifact
+      uses: actions/download-artifact@v4
       with:
-        python-version: ${{ matrix.python-version }}
+        name: macos-wheels
+        path: ${{ github.workspace }}
 
-    - name: Install the wheel and test dependencies
-      run: |
-        python -m pip install samseg*.whl
-        python -m pip install pytest
-        python -m pip install tensorflow
-        pytest tests -v
+  - name: Python - set up ${{ matrix.python-version }}
+    uses: actions/setup-python@v5
+    with:
+      python-version: ${{ matrix.python-version }}
+
+  - name: Install the wheel and test dependencies
+    run: |
+      python -m pip install samseg*.whl
+      python -m pip install pytest
+      python -m pip install tensorflow
+      pytest tests -v
 
   publish:
     name: Publish the wheel

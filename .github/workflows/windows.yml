@@ -9,7 +9,8 @@ on:
   workflow_dispatch:
 
 jobs:
-  example_matrix:
+  build_and_test:
+    name: Build, test and upload
     strategy:
     max-parallel: 1
     matrix:
