@@ -9,7 +9,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  build_and_test:
+  build:
     name: Build, test and upload
     strategy:
       max-parallel: 1
@@ -28,6 +28,17 @@ jobs:
       run: | 
         git submodule init
         git submodule update
+
+    - name: Setup python ${{ matrix.python-version }}
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ matrix.python-version }}
+        architecture: 'x64'
+
+    - name: Set python version
+      run: |
+        $pythonVersionStr = python -c "import sys; print(f'cp{sys.version_info.major}{sys.version_info.minor}')"
+        echo "pythonVersionStr=$pythonVersionStr" | Out-File -FilePath $Env:GITHUB_ENV -Encoding utf8 -Append
 
     - name: Build zlib
       run: |
@@ -48,14 +59,11 @@ jobs:
         cd ..
       shell: cmd
 
-    - name: Build and test samseg python ${{ matrix.python-version }}
-      uses: actions/setup-python@v5
-      with:
-        python-version: ${{ matrix.python-version }}
-        architecture: 'x64'
-    - run: |
-        python -m pip wheel . -w .\dist  --no-deps --verbose
-        python -m pip install . -f .\dist\
+
+    - name: Build wheel
+      run: |
+        python -m pip wheel . -w .\dist-%pythonVersionStr%  --no-deps --verbose
+        python -m pip install . -f .\dist-%pythonVersionStr%\
         #python -m pip install -r requirements.txt
         #python -m pip install pytest
         #python -m pip install tensorflow
@@ -74,13 +82,41 @@ jobs:
     - name: Upload artifact
       uses: actions/upload-artifact@v4
       with:
-        name: windows-wheels
-        path: .\dist\*.whl
+        name: windows-wheels-${{ env.pythonVersionStr }}
+        path: .\dist-${{ env.pythonVersionStr }}\*.whl
+
+  publish:
+    name: Publish the wheels
+    needs: build
+    strategy:
+      max-parallel: 1
+      matrix:
+        python-version: ["3.8", "3.9", "3.10", "3.11"]
+
+    runs-on: windows-2022
+
+    steps:
+    - name: Setup python ${{ matrix.python-version }}
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ matrix.python-version }}
+        architecture: 'x64'
+
+    - name: Set python version
+      run: |
+        $pythonVersionStr = python -c "import sys; print(f'cp{sys.version_info.major}{sys.version_info.minor}')"
+        echo "pythonVersionStr=$pythonVersionStr" | Out-File -FilePath $Env:GITHUB_ENV -Encoding utf8 -Append
+
+    - name: Download artifact
+      uses: actions/download-artifact@v4
+      with:
+        name: windows-wheels-${{ env.pythonVersionStr }}
+        path: ${{ github.workspace }}
 
     - name: Upload to PyPI
       if: ${{ github.event_name == 'push' && startsWith(github.ref, 'refs/tags') }}
       run: |
         python -m pip install twine
-        python -m twine upload .\dist\*.whl -u __token__ -p "$env:PASSWORD"
+        python -m twine upload *.whl -u __token__ -p "$env:PASSWORD"
       env:
         PASSWORD: ${{ secrets.PYPI_TOKEN }}

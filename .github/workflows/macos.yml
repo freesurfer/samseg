@@ -123,9 +123,18 @@ jobs:
       with:
         python-version: ${{ matrix.python-version }}
 
-    - name: Set python version and platform variables
+    - name: Detect if arm and set wheel variables
+      if: runner.arch == 'ARM64' || runner.arch == 'ARM64'
       run: |
         _PYTHON_HOST_PLATFORM="macosx-14.0-arm64"
+        echo "_PYTHON_HOST_PLATFORM=${_PYTHON_HOST_PLATFORM}" >> $GITHUB_ENV
+        PYTHON_VERSION_STR=$(python -c "import sys;print(f'cp{sys.version_info.major}{sys.version_info.minor}')")
+        echo "PYTHON_VERSION_STR=${PYTHON_VERSION_STR}" >> $GITHUB_ENV
+
+    - name: Detect if x64 and set build variables
+      if: runner.arch == 'x64'
+      run: |
+        _PYTHON_HOST_PLATFORM="macosx-13.0-x86_64"
         echo "_PYTHON_HOST_PLATFORM=${_PYTHON_HOST_PLATFORM}" >> $GITHUB_ENV
         PYTHON_VERSION_STR=$(python -c "import sys;print(f'cp{sys.version_info.major}{sys.version_info.minor}')")
         echo "PYTHON_VERSION_STR=${PYTHON_VERSION_STR}" >> $GITHUB_ENV
@@ -161,9 +170,18 @@ jobs:
       with:
         python-version: ${{ matrix.python-version }}
 
-    - name: Set python version and platform variables
+    - name: Detect if arm and set wheel variables
+      if: runner.arch == 'ARM64' || runner.arch == 'ARM64'
       run: |
         _PYTHON_HOST_PLATFORM="macosx-14.0-arm64"
+        echo "_PYTHON_HOST_PLATFORM=${_PYTHON_HOST_PLATFORM}" >> $GITHUB_ENV
+        PYTHON_VERSION_STR=$(python -c "import sys;print(f'cp{sys.version_info.major}{sys.version_info.minor}')")
+        echo "PYTHON_VERSION_STR=${PYTHON_VERSION_STR}" >> $GITHUB_ENV
+
+    - name: Detect if x64 and set build variables
+      if: runner.arch == 'x64'
+      run: |
+        _PYTHON_HOST_PLATFORM="macosx-13.0-x86_64"
         echo "_PYTHON_HOST_PLATFORM=${_PYTHON_HOST_PLATFORM}" >> $GITHUB_ENV
         PYTHON_VERSION_STR=$(python -c "import sys;print(f'cp{sys.version_info.major}{sys.version_info.minor}')")
         echo "PYTHON_VERSION_STR=${PYTHON_VERSION_STR}" >> $GITHUB_ENV
