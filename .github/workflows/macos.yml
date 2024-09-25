@@ -11,12 +11,12 @@ on:
 
 jobs:
   build:
-  name: Build and upload artefact
+    name: Build and upload artefact
     strategy:
-      matrix:
-        os: [macos-latest, macos-13]
-        python-version: ["3.8", "3.9", "3.10", "3.11"]
-        max-parallel: 1
+    max-parallel: 1
+    matrix:
+      os: [macos-latest, macos-13]
+      python-version: ["3.8", "3.9", "3.10", "3.11"]
 
     runs-on: ${{ matrix.os }}
 
@@ -107,11 +107,12 @@ jobs:
     name: Test the wheel
     needs: build
     strategy:
+      max-parallel: 1
       matrix:
         os: [macos-latest, macos-13]
         python-version: ["3.8", "3.9", "3.10", "3.11"]
-        max-parallel: 1
-      runs-on: ${{ matrix.os }}
+
+    runs-on: ${{ matrix.os }}
 
     steps:
       - name: Checkout
