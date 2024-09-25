@@ -54,7 +54,7 @@ jobs:
         python-version: ${{ matrix.python-version }}
         architecture: 'x64'
     - run: |
-        python -m pip wheel . -w .\dist  --no-deps
+        python -m pip wheel . -w .\dist  --no-deps --verbose
         python -m pip install . -f .\dist\
         #python -m pip install -r requirements.txt
         #python -m pip install pytest

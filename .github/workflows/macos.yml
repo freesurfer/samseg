@@ -100,7 +100,7 @@ jobs:
     - name: Upload artifact
       uses: actions/upload-artifact@v4
       with:
-        name: macos-wheels
+        name: macos-wheels-${{ env.PYTHON_VERSION_STR }}-${{ env._PYTHON_HOST_PLATFORM }}
         path: dist-${{ env.PYTHON_VERSION_STR }}-${{ env._PYTHON_HOST_PLATFORM }}/*.whl
 
   test:
@@ -118,16 +118,24 @@ jobs:
     - name: Checkout
       uses: actions/checkout@v4
 
-    - name: Download artifact
-      uses: actions/download-artifact@v4
-      with:
-        name: macos-wheels
-        path: ${{ github.workspace }}
-
     - name: Python - set up ${{ matrix.python-version }}
       uses: actions/setup-python@v5
       with:
         python-version: ${{ matrix.python-version }}
+
+    - name: Set python version and platform variables
+      run: |
+        _PYTHON_HOST_PLATFORM="macosx-14.0-arm64"
+        echo "_PYTHON_HOST_PLATFORM=${_PYTHON_HOST_PLATFORM}" >> $GITHUB_ENV
+        PYTHON_VERSION_STR=$(python -c "import sys;print(f'cp{sys.version_info.major}{sys.version_info.minor}')")
+        echo "PYTHON_VERSION_STR=${PYTHON_VERSION_STR}" >> $GITHUB_ENV
+
+    - name: Download artifact
+      uses: actions/download-artifact@v4
+      with:
+        name: macos-wheels-${{ env.PYTHON_VERSION_STR }}-${{ env._PYTHON_HOST_PLATFORM }}
+        path: ${{ github.workspace }}
+
 
     - name: Install the wheel and test dependencies
       run: |
@@ -139,18 +147,32 @@ jobs:
   publish:
     name: Publish the wheel
     needs: test
-    runs-on: macos-latest
+    strategy:
+      max-parallel: 1
+      matrix:
+        os: [macos-latest, macos-13]
+        python-version: ["3.8", "3.9", "3.10", "3.11"]
+
+    runs-on: ${{ matrix.os }}
     if: startsWith(github.ref, 'refs/tags')
     steps:
+    - name: Python - set up ${{ matrix.python-version }}
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ matrix.python-version }}
+
+    - name: Set python version and platform variables
+      run: |
+        _PYTHON_HOST_PLATFORM="macosx-14.0-arm64"
+        echo "_PYTHON_HOST_PLATFORM=${_PYTHON_HOST_PLATFORM}" >> $GITHUB_ENV
+        PYTHON_VERSION_STR=$(python -c "import sys;print(f'cp{sys.version_info.major}{sys.version_info.minor}')")
+        echo "PYTHON_VERSION_STR=${PYTHON_VERSION_STR}" >> $GITHUB_ENV
+
     - name: Download artifact
       uses: actions/download-artifact@v4
       with:
-        name: macos-wheels
+        name: macos-wheels-${{ env.PYTHON_VERSION_STR }}-${{ env._PYTHON_HOST_PLATFORM }}
         path: ${{ github.workspace }}
-    - name: Python - set up 3.10
-      uses: actions/setup-python@v5
-      with:
-        python-version: "3.10"
 
     - name: Upload to PyPI
       run: |
