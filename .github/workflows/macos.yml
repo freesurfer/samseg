@@ -10,11 +10,13 @@ on:
   workflow_dispatch:
 
 jobs:
-  example_matrix:
+  build:
+  name: Build and upload artefact
     strategy:
       matrix:
         os: [macos-latest, macos-13]
         python-version: ["3.8", "3.9", "3.10", "3.11"]
+        max-parallel: 1
 
     runs-on: ${{ matrix.os }}
 
@@ -95,24 +97,63 @@ jobs:
         _PYTHON_HOST_PLATFORM: ${{ env._PYTHON_HOST_PLATFORM }}
         ARCHFLAGS: ${{ env.ARCHFLAGS }}
 
-    - name: Install the wheel and test dependencies
-      run: |
-        python -m pip install samseg -f ./dist-${PYTHON_VERSION_STR}-${_PYTHON_HOST_PLATFORM}
-        python -m pip install pytest
-        python -m pip install tensorflow
-        python -m pytest samseg/tests
-
     - name: Upload artifact
       uses: actions/upload-artifact@v4
       with:
         name: macos-wheels
         path: dist-${{ env.PYTHON_VERSION_STR }}-${{ env._PYTHON_HOST_PLATFORM }}/*.whl
 
-    - name: Upload to PyPI
-      if: ${{ github.event_name == 'push' && startsWith(github.ref, 'refs/tags') }}
+  test:
+    name: Test the wheel
+    needs: build
+    strategy:
+      matrix:
+        os: [macos-latest, macos-13]
+        python-version: ["3.8", "3.9", "3.10", "3.11"]
+        max-parallel: 1
+      runs-on: ${{ matrix.os }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Download artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: macos-wheels
+          path: ${{ github.workspace }}
+
+    - name: Python - set up ${{ matrix.python-version }}
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ matrix.python-version }}
+
+    - name: Install the wheel and test dependencies
       run: |
-        $PYTHON -m pip install twine
-        $PYTHON -m twine upload dist-${PYTHON_VERSION_STR}-${_PYTHON_HOST_PLATFORM}/*.whl -u __token__ -p "$PASSWORD"
+        python -m pip install samseg*.whl
+        python -m pip install pytest
+        python -m pip install tensorflow
+        pytest tests -v
+
+  publish:
+    name: Publish the wheel
+    needs: test
+    runs-on: macos-latest
+    if: startsWith(github.ref, 'refs/tags')
+    steps:
+    - name: Download artifact
+      uses: actions/download-artifact@v4
+      with:
+        name: macos-wheels
+        path: ${{ github.workspace }}
+    - name: Python - set up 3.10
+      uses: actions/setup-python@v5
+      with:
+        python-version: "3.10"
+
+    - name: Upload to PyPI
+      run: |
+        python -m pip install twine
+        python -m twine upload *.whl -u __token__ -p "$PASSWORD"
       env:
         PASSWORD: ${{ secrets.PYPI_TOKEN }}
-        PYTHON: /Library/Frameworks/Python.framework/Versions/3.8/bin/python3
