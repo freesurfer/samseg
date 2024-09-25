@@ -106,7 +106,7 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: macos-wheels
-        path: dist-${{ PYTHON_VERSION_STR }}-${{ _PYTHON_HOST_PLATFORM }}/*.whl
+        path: dist-${{ env.PYTHON_VERSION_STR }}-${{ env._PYTHON_HOST_PLATFORM }}/*.whl
 
     - name: Upload to PyPI
       if: ${{ github.event_name == 'push' && startsWith(github.ref, 'refs/tags') }}
