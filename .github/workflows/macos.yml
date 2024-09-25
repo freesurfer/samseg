@@ -23,7 +23,7 @@ jobs:
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
-    
+
     - name: Set up python versions ${{ matrix.python-version }}
       uses: actions/setup-python@v5
       with:
@@ -58,18 +58,18 @@ jobs:
         echo "PYTHON_VERSION_STR=${PYTHON_VERSION_STR}" >> $GITHUB_ENV
 
     - name: Checkout submodules
-      run: | 
+      run: |
         git submodule init
         git submodule update
 
     - name: Build zlib
       run: |
-         git clone https://github.com/madler/zlib.git
-         mkdir zlib-build-${PYTHON_VERSION_STR}-${_PYTHON_HOST_PLATFORM}
-         cd zlib-build-${PYTHON_VERSION_STR}-${_PYTHON_HOST_PLATFORM}
-         cmake ../zlib -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=../zlib-install-${PYTHON_VERSION_STR}-${_PYTHON_HOST_PLATFORM}
-         make install
-         cd ..
+          git clone https://github.com/madler/zlib.git
+          mkdir zlib-build-${PYTHON_VERSION_STR}-${_PYTHON_HOST_PLATFORM}
+          cd zlib-build-${PYTHON_VERSION_STR}-${_PYTHON_HOST_PLATFORM}
+          cmake ../zlib -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=../zlib-install-${PYTHON_VERSION_STR}-${_PYTHON_HOST_PLATFORM}
+          make install
+          cd ..
 
     - name: Build ITK
       run: |
@@ -124,17 +124,17 @@ jobs:
         name: macos-wheels
         path: ${{ github.workspace }}
 
-  - name: Python - set up ${{ matrix.python-version }}
-    uses: actions/setup-python@v5
-    with:
-      python-version: ${{ matrix.python-version }}
+    - name: Python - set up ${{ matrix.python-version }}
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ matrix.python-version }}
 
-  - name: Install the wheel and test dependencies
-    run: |
-      python -m pip install samseg*.whl
-      python -m pip install pytest
-      python -m pip install tensorflow
-      pytest tests -v
+    - name: Install the wheel and test dependencies
+      run: |
+        python -m pip install samseg*.whl
+        python -m pip install pytest
+        python -m pip install tensorflow
+        pytest tests -v
 
   publish:
     name: Publish the wheel
