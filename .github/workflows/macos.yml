@@ -27,34 +27,6 @@ jobs:
       with:
         python-version: ${{ matrix.python-version }}
 
-    - name: Checkout submodules
-      run: | 
-        git submodule init
-        git submodule update
-
-    - name: Build zlib
-      run: |
-         git clone https://github.com/madler/zlib.git
-         mkdir zlib-build-${PYTHON_VERSION_STR}-${_PYTHON_HOST_PLATFORM}
-         cd zlib-build-${PYTHON_VERSION_STR}-${_PYTHON_HOST_PLATFORM}
-         cmake ../zlib -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=../zlib-install-${PYTHON_VERSION_STR}-${_PYTHON_HOST_PLATFORM}
-         make install
-         cd ..
-
-    - name: Build ITK
-      run: |
-        mkdir ITK-build-${PYTHON_VERSION_STR}-${_PYTHON_HOST_PLATFORM}
-        cd ITK-build-${PYTHON_VERSION_STR}-${_PYTHON_HOST_PLATFORM}
-        cmake \
-            -DBUILD_SHARED_LIBS=OFF \
-            -DBUILD_TESTING=OFF \
-            -DBUILD_EXAMPLES=OFF \
-            -DCMAKE_BUILD_TYPE=Release \
-            -DCMAKE_INSTALL_PREFIX=../ITK-install-${PYTHON_VERSION_STR}-${_PYTHON_HOST_PLATFORM} \
-            ../ITK
-        make install
-        cd ..
-
     - name: Detect if arm and set build variables
       if: runner.arch == 'ARM64' || runner.arch == 'ARM64'
       run: |
@@ -82,6 +54,34 @@ jobs:
         echo "ARCHFLAGS=${ARCHFLAGS=}" >> $GITHUB_ENV
         PYTHON_VERSION_STR=$(python -c "import sys;print(f'cp{sys.version_info.major}{sys.version_info.minor}')")
         echo "PYTHON_VERSION_STR=${PYTHON_VERSION_STR}" >> $GITHUB_ENV
+
+    - name: Checkout submodules
+      run: | 
+        git submodule init
+        git submodule update
+
+    - name: Build zlib
+      run: |
+         git clone https://github.com/madler/zlib.git
+         mkdir zlib-build-${PYTHON_VERSION_STR}-${_PYTHON_HOST_PLATFORM}
+         cd zlib-build-${PYTHON_VERSION_STR}-${_PYTHON_HOST_PLATFORM}
+         cmake ../zlib -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=../zlib-install-${PYTHON_VERSION_STR}-${_PYTHON_HOST_PLATFORM}
+         make install
+         cd ..
+
+    - name: Build ITK
+      run: |
+        mkdir ITK-build-${PYTHON_VERSION_STR}-${_PYTHON_HOST_PLATFORM}
+        cd ITK-build-${PYTHON_VERSION_STR}-${_PYTHON_HOST_PLATFORM}
+        cmake \
+            -DBUILD_SHARED_LIBS=OFF \
+            -DBUILD_TESTING=OFF \
+            -DBUILD_EXAMPLES=OFF \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_INSTALL_PREFIX=../ITK-install-${PYTHON_VERSION_STR}-${_PYTHON_HOST_PLATFORM} \
+            ../ITK
+        make install
+        cd ..
 
     - name: Build samseg for python version ${{ matrix.python-version }} and test
       run: |
