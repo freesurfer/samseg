@@ -35,22 +35,22 @@ jobs:
     - name: Build zlib
       run: |
          git clone https://github.com/madler/zlib.git
-         mkdir zlib-build
-         cd zlib-build
-         cmake ../zlib -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=../zlib-install
+         mkdir zlib-build-${PYTHON_VERSION_STR}-${_PYTHON_HOST_PLATFORM}
+         cd zlib-build-${PYTHON_VERSION_STR}-${_PYTHON_HOST_PLATFORM}
+         cmake ../zlib -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=../zlib-install-${PYTHON_VERSION_STR}-${_PYTHON_HOST_PLATFORM}
          make install
          cd ..
 
     - name: Build ITK
       run: |
-        mkdir ITK-build
-        cd ITK-build
+        mkdir ITK-build-${PYTHON_VERSION_STR}-${_PYTHON_HOST_PLATFORM}
+        cd ITK-build-${PYTHON_VERSION_STR}-${_PYTHON_HOST_PLATFORM}
         cmake \
             -DBUILD_SHARED_LIBS=OFF \
             -DBUILD_TESTING=OFF \
             -DBUILD_EXAMPLES=OFF \
             -DCMAKE_BUILD_TYPE=Release \
-            -DCMAKE_INSTALL_PREFIX=../ITK-install \
+            -DCMAKE_INSTALL_PREFIX=../ITK-install-${PYTHON_VERSION_STR}-${_PYTHON_HOST_PLATFORM} \
             ../ITK
         make install
         cd ..
@@ -87,9 +87,9 @@ jobs:
       run: |
         python -m pip wheel . -w ./dist-${PYTHON_VERSION_STR}-${_PYTHON_HOST_PLATFORM} --no-deps --verbose
       env:
-        ITK_DIR: ITK-install
-        ZLIB_INCLUDE_DIR: zlib-install/include
-        ZLIB_LIBRARY: zlib-install/lib/libz.a
+        ITK_DIR: ITK-install-${{ env.PYTHON_VERSION_STR }}-${{ env._PYTHON_HOST_PLATFORM }}
+        ZLIB_INCLUDE_DIR: zlib-install-${{ env.PYTHON_VERSION_STR }}-${{ env._PYTHON_HOST_PLATFORM }}/include
+        ZLIB_LIBRARY: zlib-install-${{ env.PYTHON_VERSION_STR }}-${{ env._PYTHON_HOST_PLATFORM }}/lib/libz.a
         APPLE_ARM64: ${{ env.APPLE_ARM64 }}
         MACOSX_DEPLOYMENT_TARGET: ${{ env.MACOSX_DEPLOYMENT_TARGET }}
         _PYTHON_HOST_PLATFORM: ${{ env._PYTHON_HOST_PLATFORM }}
