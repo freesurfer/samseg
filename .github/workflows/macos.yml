@@ -155,6 +155,7 @@ jobs:
         python -m pip install samseg*.whl
         python -m pip install pytest
         python -m pip install tensorflow
+        cd..
         python -c "import samseg"
         python -m pytest --pyargs samseg.tests
 
