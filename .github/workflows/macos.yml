@@ -155,7 +155,8 @@ jobs:
         python -m pip install samseg*.whl
         python -m pip install pytest
         python -m pip install tensorflow
-        pytest --pyargs samseg.tests
+        python -c "import samseg"
+        python -m pytest --pyargs samseg.tests
 
   publish:
     name: Publish the wheel
