@@ -12,6 +12,17 @@ from ..Affine import initializationOptions
 from ..Samseg import initVisualizer, Samseg
 from ..io import kvlReadSharedGMMParameters
 
+# This is a hack to test an installed wheel
+# Because the test data is not in the wheel
+# the tests would fail. If you export the
+# SAMSEG_TEST_PATH variable to point to
+# the source code directory, the test data
+# is picked up from there instead.
+try:
+    SAMSEGDIR = os.environ['SAMSEG_TEST_PATH']
+except KeyError:
+    print("No environment variable set, using standard path.")
+
 @pytest.fixture(scope='module')
 def testernie_nii():
     fn = os.path.join(

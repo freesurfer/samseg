@@ -13,7 +13,7 @@ jobs:
   build:
     name: Build and upload artefact
     strategy:
-      max-parallel: 1
+      # max-parallel: 1
       matrix:
         os: [macos-latest, macos-13]
         python-version: ["3.8", "3.9", "3.10", "3.11"]
@@ -107,7 +107,7 @@ jobs:
     name: Test the wheel
     needs: build
     strategy:
-      max-parallel: 1
+      # max-parallel: 1
       matrix:
         os: [macos-latest, macos-13]
         python-version: ["3.8", "3.9", "3.10", "3.11"]
@@ -130,6 +130,8 @@ jobs:
         echo "_PYTHON_HOST_PLATFORM=${_PYTHON_HOST_PLATFORM}" >> $GITHUB_ENV
         PYTHON_VERSION_STR=$(python -c "import sys;print(f'cp{sys.version_info.major}{sys.version_info.minor}')")
         echo "PYTHON_VERSION_STR=${PYTHON_VERSION_STR}" >> $GITHUB_ENV
+        SAMSEG_TEST_PATH=${GITHUB_WORKSPACE}/samseg
+        echo "SAMSEG_TEST_PATH=${SAMSEG_TEST_PATH}" >> $GITHUB_ENV
 
     - name: Detect if x64 and set build variables
       if: runner.arch == 'x64'
@@ -138,6 +140,8 @@ jobs:
         echo "_PYTHON_HOST_PLATFORM=${_PYTHON_HOST_PLATFORM}" >> $GITHUB_ENV
         PYTHON_VERSION_STR=$(python -c "import sys;print(f'cp{sys.version_info.major}{sys.version_info.minor}')")
         echo "PYTHON_VERSION_STR=${PYTHON_VERSION_STR}" >> $GITHUB_ENV
+        SAMSEG_TEST_PATH=${GITHUB_WORKSPACE}/samseg
+        echo "SAMSEG_TEST_PATH=${SAMSEG_TEST_PATH}" >> $GITHUB_ENV
 
     - name: Download artifact
       uses: actions/download-artifact@v4
@@ -151,7 +155,7 @@ jobs:
         python -m pip install samseg*.whl
         python -m pip install pytest
         python -m pip install tensorflow
-        python -m pytest samseg
+        pytest --pyargs samseg.tests
 
   publish:
     name: Publish the wheel
