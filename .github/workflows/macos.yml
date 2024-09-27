@@ -44,6 +44,8 @@ jobs:
         echo "ARCHFLAGS=${ARCHFLAGS=}" >> $GITHUB_ENV
         PYTHON_VERSION_STR=$(python -c "import sys;print(f'cp{sys.version_info.major}{sys.version_info.minor}')")
         echo "PYTHON_VERSION_STR=${PYTHON_VERSION_STR}" >> $GITHUB_ENV
+        CMAKE_OSX_ARCHITECTURES="arm64"
+        echo "CMAKE_OSX_ARCHITECTURES=${CMAKE_OSX_ARCHITECTURES}" >> $GITHUB_ENV
 
     - name: Detect if x64 and set build variables
       if: runner.arch == 'x64'
@@ -58,6 +60,8 @@ jobs:
         echo "ARCHFLAGS=${ARCHFLAGS=}" >> $GITHUB_ENV
         PYTHON_VERSION_STR=$(python -c "import sys;print(f'cp{sys.version_info.major}{sys.version_info.minor}')")
         echo "PYTHON_VERSION_STR=${PYTHON_VERSION_STR}" >> $GITHUB_ENV
+        CMAKE_OSX_ARCHITECTURES="x86_64"
+        echo "CMAKE_OSX_ARCHITECTURES=${CMAKE_OSX_ARCHITECTURES}" >> $GITHUB_ENV
 
     - name: Checkout submodules
       run: |
@@ -98,6 +102,7 @@ jobs:
         MACOSX_DEPLOYMENT_TARGET: ${{ env.MACOSX_DEPLOYMENT_TARGET }}
         _PYTHON_HOST_PLATFORM: ${{ env._PYTHON_HOST_PLATFORM }}
         ARCHFLAGS: ${{ env.ARCHFLAGS }}
+        CMAKE_OSX_ARCHITECTURES: ${{ env.CMAKE_OSX_ARCHITECTURES }}
 
     - name: Upload artifact
       uses: actions/upload-artifact@v4
