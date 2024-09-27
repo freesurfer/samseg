@@ -34,7 +34,9 @@ jobs:
     - name: Detect if arm and set build variables
       if: runner.arch == 'ARM64' || runner.arch == 'ARM64'
       run: |
-        APPLE_ARM64=ON
+        APPLE="ON"
+        echo "APPLE=${APPLE}" >> $GITHUB_ENV
+        APPLE_ARM64="ON"
         echo "APPLE_ARM64=${APPLE_ARM64}" >> $GITHUB_ENV
         MACOSX_DEPLOYMENT_TARGET="14.0"
         echo "MACOSX_DEPLOYMENT_TARGET=${MACOSX_DEPLOYMENT_TARGET}" >> $GITHUB_ENV
@@ -50,7 +52,9 @@ jobs:
     - name: Detect if x64 and set build variables
       if: runner.arch == 'x64'
       run: |
-        APPLE_ARM64=OFF
+        APPLE="ON"
+        echo "APPLE=${APPLE}" >> $GITHUB_ENV
+        APPLE_ARM64="OFF"
         echo "APPLE_ARM64=${APPLE_ARM64}" >> $GITHUB_ENV
         MACOSX_DEPLOYMENT_TARGET="13.0"
         echo "MACOSX_DEPLOYMENT_TARGET=${MACOSX_DEPLOYMENT_TARGET}" >> $GITHUB_ENV
@@ -99,6 +103,7 @@ jobs:
         ZLIB_INCLUDE_DIR: zlib-install-${{ env.PYTHON_VERSION_STR }}-${{ env._PYTHON_HOST_PLATFORM }}/include
         ZLIB_LIBRARY: zlib-install-${{ env.PYTHON_VERSION_STR }}-${{ env._PYTHON_HOST_PLATFORM }}/lib/libz.a
         APPLE_ARM64: ${{ env.APPLE_ARM64 }}
+        APPLE: ${{ env.APPLE }}
         MACOSX_DEPLOYMENT_TARGET: ${{ env.MACOSX_DEPLOYMENT_TARGET }}
         _PYTHON_HOST_PLATFORM: ${{ env._PYTHON_HOST_PLATFORM }}
         ARCHFLAGS: ${{ env.ARCHFLAGS }}
