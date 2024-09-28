@@ -49,7 +49,7 @@ message(STATUS "ITK_DIR=${ITK_DIR} pybind11_DIR=${pybind11_DIR}")
 # when building with freesurfer, CMAKE_C_COMPILER and CMAKE_CXX_COMPILER will be specified on the cmake command line
 if(DEFINED ENV{APPLE})
   MESSAGE(STATUS "ARCH VARIABLE SET TO --[$ENV{APPLE_ARM64}]--")
-  if(ENV{APPLE_ARM64} STREQUAL "ON")
+  if($ENV{APPLE_ARM64} MATCHES "ON")
     MESSAGE(STATUS "SETTING TARGET TO ARM64")
     set(CMAKE_OSX_ARCHITECTURES "arm64")
     add_definitions(-DARM64 -DDarwin -DPNG_ARM_NEON_OPT=0)
