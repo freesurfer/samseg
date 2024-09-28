@@ -62,7 +62,7 @@ endif()
 message(STATUS "CMAKE_C_COMPILER=${CMAKE_C_COMPILER}, CMAKE_C_COMPILER_ID=${CMAKE_C_COMPILER_ID}, CMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER}, CMAKE_CXX_COMPILER_ID=${CMAKE_CXX_COMPILER_ID}")
 
 # warnings
-if(NOT DEFINED ENV{APPLE_ARM64} OR $ENV{APPLE_ARM64} MATCHES "OFF")
+if(NOT DEFINED ENV{APPLE_ARM64} OR "$ENV{APPLE_ARM64}" MATCHES "OFF")
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Werror -Wno-absolute-value -Wno-sign-compare -Wno-write-strings -Wno-unused-result -Wno-unused-parameter")
 endif()
 
