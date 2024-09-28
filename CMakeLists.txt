@@ -47,7 +47,8 @@ message(STATUS "ITK_DIR=${ITK_DIR} pybind11_DIR=${pybind11_DIR}")
 # --------------------------------------------------
 # set -DAPPLE=ON and -DAPPLE_ARM64=ON on cmake command line for arm64 build
 # when building with freesurfer, CMAKE_C_COMPILER and CMAKE_CXX_COMPILER will be specified on the cmake command line
-if(${APPLE})
+if(DEFINED ENV{APPLE})
+  MESSAGE(STATUS "ARCH VARIABLE SET TO --[$ENV{APPLE_ARM64}]--")
   if("${APPLE_ARM64}" STREQUAL "ON")
     set(CMAKE_OSX_ARCHITECTURES "arm64")
     add_definitions(-DARM64 -DDarwin -DPNG_ARM_NEON_OPT=0)
