@@ -24,7 +24,9 @@ jobs:
 
     steps:
     - name: Checkout code
-      uses: actions/checkout@v4
+    - uses: actions/checkout@v4
+      with:
+        fetch-tags: true
 
     - name: Set up python versions ${{ matrix.python-version }}
       uses: actions/setup-python@v5
