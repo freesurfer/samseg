@@ -24,7 +24,9 @@ endif()
 add_subdirectory(${pybind11_DIR} pybind11)
 
 # --- ITK ---
-find_package(ITK HINTS ${ITK_DIR} REQUIRED)
+add_subdirectory(ITK)
+set(ITK_DIR ${ITK_BINARY_DIR})
+find_package(ITK REQUIRED)
 
 message(STATUS "Using ITK from: ${ITK_DIR}")
 message(STATUS "Using pybind11 from: ${pybind11_DIR}")
