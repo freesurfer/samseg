@@ -430,8 +430,8 @@ AtlasMeshDeformationOptimizer
       break;
       }
 
-    if ( fabsf( directionalDerivative ) <= ( -c2 * initialDirectionalDerivative ) )
-      {
+    if (std::abs(directionalDerivative) <=
+        (-c2 * initialDirectionalDerivative)) {
       // Found an excellent solution that we can simply return -- no need for zooming
       newPosition = position;
       newCost = cost;
@@ -772,9 +772,8 @@ AtlasMeshDeformationOptimizer
 
     
     // Check size
-    if ( ( fabsf( highAlpha - lowAlpha ) * maximalDeformationOfSearchDirection )
-         < m_LineSearchMaximalDeformationIntervalStopCriterion )
-      {
+    if (std::abs(highAlpha - lowAlpha) * maximalDeformationOfSearchDirection <
+        m_LineSearchMaximalDeformationIntervalStopCriterion) {
       //std::cout << "!!!!!!!!!!!!!!!" << startPosition->Begin().Value() << std::endl;
       //std::cout << "!!!!!!!!!!!!!!!" << searchDirection->Begin().Value() << std::endl;
       //std::cout << "!!!!!!!!!!!!!!!" << lowAlpha << std::endl;

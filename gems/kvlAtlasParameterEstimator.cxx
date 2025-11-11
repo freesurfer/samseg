@@ -146,10 +146,10 @@ AtlasParameterEstimator
   m_CurrentMinLogLikelihoodTimesPrior = previousMinLogLikelihoodTimesPrior / 2;
   m_IterationNumber = 0;
   this->InvokeEvent( itk::StartEvent() );
-  while ( ( ( ( previousMinLogLikelihoodTimesPrior - m_CurrentMinLogLikelihoodTimesPrior ) / 
-               fabsf( m_CurrentMinLogLikelihoodTimesPrior ) ) > m_StopCriterion ) &&
-          ( m_IterationNumber < m_MaximumNumberOfIterations ) ) 
-    {
+  while ((((previousMinLogLikelihoodTimesPrior -
+            m_CurrentMinLogLikelihoodTimesPrior) /
+           std::abs(m_CurrentMinLogLikelihoodTimesPrior)) > m_StopCriterion) &&
+         (m_IterationNumber < m_MaximumNumberOfIterations)) {
     // Estimate alphas
     this->EstimateAlphas();
  
@@ -213,9 +213,10 @@ AtlasParameterEstimator
   double  currentCost = previousCost / 2;
   m_AlphasEstimationIterationNumber = 0;
   this->InvokeEvent( AlphasEstimationStartEvent() );
-  while ( ( ( ( previousCost - currentCost ) / fabsf( currentCost ) ) > m_AlphaEstimationStopCriterion ) && 
-          ( m_AlphasEstimationIterationNumber < m_AlphasEstimationMaximumNumberOfIterations ) ) 
-    {
+  while ((previousCost - currentCost) / std::abs(currentCost) >
+             m_AlphaEstimationStopCriterion &&
+         (m_AlphasEstimationIterationNumber <
+          m_AlphasEstimationMaximumNumberOfIterations)) {
     previousCost = currentCost;
     
     // Initialize pooled statistics to zero

@@ -142,15 +142,8 @@ namespace itk
         writer.Write( fs::MRI_FLOAT ); break;
       case SHORT:
         writer.Write( fs::MRI_SHORT ); break;
-
-      // DJ -- added these cases to make the compiler shut up
-      case UNKNOWNCOMPONENTTYPE:
-      case CHAR:
-      case UINT:
-      case ULONG:
-      case LONG:
+      default:
         break;
-
       }
 
     // dof !?! -> default value = 1
