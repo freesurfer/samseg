@@ -11,7 +11,7 @@ on:
 
 jobs:
   build:
-    name: Build and upload artefact
+    name: Build and upload artifact
     strategy:
       # max-parallel: 1
       matrix:
@@ -33,41 +33,22 @@ jobs:
       with:
         python-version: ${{ matrix.python-version }}
 
-    - name: Detect if arm and set build variables
-      if: runner.arch == 'ARM64' || runner.arch == 'ARM64'
+    - name: Set platform-specific variables
       run: |
-        APPLE="ON"
-        echo "APPLE=${APPLE}" >> $GITHUB_ENV
-        APPLE_ARM64="ON"
-        echo "APPLE_ARM64=${APPLE_ARM64}" >> $GITHUB_ENV
-        MACOSX_DEPLOYMENT_TARGET="14.0"
-        echo "MACOSX_DEPLOYMENT_TARGET=${MACOSX_DEPLOYMENT_TARGET}" >> $GITHUB_ENV
-        _PYTHON_HOST_PLATFORM="macosx-14.0-arm64"
-        echo "_PYTHON_HOST_PLATFORM=${_PYTHON_HOST_PLATFORM}" >> $GITHUB_ENV
-        ARCHFLAGS="-arch arm64"
-        echo "ARCHFLAGS=${ARCHFLAGS=}" >> $GITHUB_ENV
+        if [[ "${{ runner.arch }}" == "ARM64" ]]; then
+          echo "Setting variables for arm64"
+          echo "MACOSX_DEPLOYMENT_TARGET=14.0" >> $GITHUB_ENV
+          echo "_PYTHON_HOST_PLATFORM=macosx-14.0-arm64" >> $GITHUB_ENV
+          echo "ARCHFLAGS=-arch arm64" >> $GITHUB_ENV
+        else
+          echo "Setting variables for x86_64"
+          echo "MACOSX_DEPLOYMENT_TARGET=13.0" >> $GITHUB_ENV
+          echo "_PYTHON_HOST_PLATFORM=macosx-13.0-x86_64" >> $GITHUB_ENV
+          echo "ARCHFLAGS=-arch x86_64" >> $GITHUB_ENV
+        fi
+        # This variable is used for naming directories and artifacts
         PYTHON_VERSION_STR=$(python -c "import sys;print(f'cp{sys.version_info.major}{sys.version_info.minor}')")
         echo "PYTHON_VERSION_STR=${PYTHON_VERSION_STR}" >> $GITHUB_ENV
-        CMAKE_OSX_ARCHITECTURES="arm64"
-        echo "CMAKE_OSX_ARCHITECTURES=${CMAKE_OSX_ARCHITECTURES}" >> $GITHUB_ENV
-
-    - name: Detect if x64 and set build variables
-      if: runner.arch == 'x64'
-      run: |
-        APPLE="ON"
-        echo "APPLE=${APPLE}" >> $GITHUB_ENV
-        APPLE_ARM64="OFF"
-        echo "APPLE_ARM64=${APPLE_ARM64}" >> $GITHUB_ENV
-        MACOSX_DEPLOYMENT_TARGET="13.0"
-        echo "MACOSX_DEPLOYMENT_TARGET=${MACOSX_DEPLOYMENT_TARGET}" >> $GITHUB_ENV
-        _PYTHON_HOST_PLATFORM="macosx-13.0-x86_64"
-        echo "_PYTHON_HOST_PLATFORM=${_PYTHON_HOST_PLATFORM}" >> $GITHUB_ENV
-        ARCHFLAGS="-arch x86_64"
-        echo "ARCHFLAGS=${ARCHFLAGS=}" >> $GITHUB_ENV
-        PYTHON_VERSION_STR=$(python -c "import sys;print(f'cp{sys.version_info.major}{sys.version_info.minor}')")
-        echo "PYTHON_VERSION_STR=${PYTHON_VERSION_STR}" >> $GITHUB_ENV
-        CMAKE_OSX_ARCHITECTURES="x86_64"
-        echo "CMAKE_OSX_ARCHITECTURES=${CMAKE_OSX_ARCHITECTURES}" >> $GITHUB_ENV
 
     - name: Checkout submodules
       run: |
@@ -101,15 +82,13 @@ jobs:
       run: |
         python -m pip wheel . -w ./dist-${PYTHON_VERSION_STR}-${_PYTHON_HOST_PLATFORM} --no-deps --verbose
       env:
+        # Pass environment variables needed by the build
         ITK_DIR: ITK-install-${{ env.PYTHON_VERSION_STR }}-${{ env._PYTHON_HOST_PLATFORM }}
         ZLIB_INCLUDE_DIR: zlib-install-${{ env.PYTHON_VERSION_STR }}-${{ env._PYTHON_HOST_PLATFORM }}/include
         ZLIB_LIBRARY: zlib-install-${{ env.PYTHON_VERSION_STR }}-${{ env._PYTHON_HOST_PLATFORM }}/lib/libz.a
-        APPLE_ARM64: ${{ env.APPLE_ARM64 }}
-        APPLE: ${{ env.APPLE }}
         MACOSX_DEPLOYMENT_TARGET: ${{ env.MACOSX_DEPLOYMENT_TARGET }}
         _PYTHON_HOST_PLATFORM: ${{ env._PYTHON_HOST_PLATFORM }}
         ARCHFLAGS: ${{ env.ARCHFLAGS }}
-        CMAKE_OSX_ARCHITECTURES: ${{ env.CMAKE_OSX_ARCHITECTURES }}
 
     - name: Upload artifact
       uses: actions/upload-artifact@v4
@@ -139,21 +118,15 @@ jobs:
       with:
         python-version: ${{ matrix.python-version }}
 
-    - name: Detect if arm and set wheel variables
-      if: runner.arch == 'ARM64' || runner.arch == 'ARM64'
+    - name: Set platform-specific variables
       run: |
-        _PYTHON_HOST_PLATFORM="macosx-14.0-arm64"
-        echo "_PYTHON_HOST_PLATFORM=${_PYTHON_HOST_PLATFORM}" >> $GITHUB_ENV
-        PYTHON_VERSION_STR=$(python -c "import sys;print(f'cp{sys.version_info.major}{sys.version_info.minor}')")
-        echo "PYTHON_VERSION_STR=${PYTHON_VERSION_STR}" >> $GITHUB_ENV
-        SAMSEG_TEST_PATH=${GITHUB_WORKSPACE}/samseg
-        echo "SAMSEG_TEST_PATH=${SAMSEG_TEST_PATH}" >> $GITHUB_ENV
-
-    - name: Detect if x64 and set build variables
-      if: runner.arch == 'x64'
-      run: |
-        _PYTHON_HOST_PLATFORM="macosx-13.0-x86_64"
-        echo "_PYTHON_HOST_PLATFORM=${_PYTHON_HOST_PLATFORM}" >> $GITHUB_ENV
+        if [[ "${{ runner.arch }}" == "ARM64" ]]; then
+          echo "Setting variables for arm64"
+          echo "_PYTHON_HOST_PLATFORM=macosx-14.0-arm64" >> $GITHUB_ENV
+        else
+          echo "Setting variables for x86_64"
+          echo "_PYTHON_HOST_PLATFORM=macosx-13.0-x86_64" >> $GITHUB_ENV
+        fi
         PYTHON_VERSION_STR=$(python -c "import sys;print(f'cp{sys.version_info.major}{sys.version_info.minor}')")
         echo "PYTHON_VERSION_STR=${PYTHON_VERSION_STR}" >> $GITHUB_ENV
         SAMSEG_TEST_PATH=${GITHUB_WORKSPACE}/samseg
@@ -185,26 +158,22 @@ jobs:
         python-version: ["3.9", "3.10", "3.11", "3.12"]
 
     runs-on: ${{ matrix.os }}
-    if: startsWith(github.ref, 'refs/tags') 
+    if: startsWith(github.ref, 'refs/tags')
     steps:
     - name: Python - set up ${{ matrix.python-version }}
       uses: actions/setup-python@v5
       with:
         python-version: ${{ matrix.python-version }}
 
-    - name: Detect if arm and set wheel variables
-      if: runner.arch == 'ARM64' || runner.arch == 'ARM64'
+    - name: Set platform-specific variables
       run: |
-        _PYTHON_HOST_PLATFORM="macosx-14.0-arm64"
-        echo "_PYTHON_HOST_PLATFORM=${_PYTHON_HOST_PLATFORM}" >> $GITHUB_ENV
-        PYTHON_VERSION_STR=$(python -c "import sys;print(f'cp{sys.version_info.major}{sys.version_info.minor}')")
-        echo "PYTHON_VERSION_STR=${PYTHON_VERSION_STR}" >> $GITHUB_ENV
-
-    - name: Detect if x64 and set build variables
-      if: runner.arch == 'x64'
-      run: |
-        _PYTHON_HOST_PLATFORM="macosx-13.0-x86_64"
-        echo "_PYTHON_HOST_PLATFORM=${_PYTHON_HOST_PLATFORM}" >> $GITHUB_ENV
+        if [[ "${{ runner.arch }}" == "ARM64" ]]; then
+          echo "Setting variables for arm64"
+          echo "_PYTHON_HOST_PLATFORM=macosx-14.0-arm64" >> $GITHUB_ENV
+        else
+          echo "Setting variables for x86_64"
+          echo "_PYTHON_HOST_PLATFORM=macosx-13.0-x86_64" >> $GITHUB_ENV
+        fi
         PYTHON_VERSION_STR=$(python -c "import sys;print(f'cp{sys.version_info.major}{sys.version_info.minor}')")
         echo "PYTHON_VERSION_STR=${PYTHON_VERSION_STR}" >> $GITHUB_ENV
 
