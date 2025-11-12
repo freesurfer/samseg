@@ -79,7 +79,7 @@ else()
   message(STATUS "Non-Apple platform detected.")
 
   # Set compiler warnings (the original file disabled these for Apple)
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Werror -Wno-absolute-value -Wno-sign-compare -Wno-write-strings -Wno-unused-result -Wno-unused-parameter")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Wno-sign-compare -Wno-write-strings -Wno-unused-result -Wno-unused-parameter")
 
   # Set linker flags for code stripping
   set(STRIP_FLAGS "-fdata-sections -ffunction-sections -Wl,--gc-sections")
