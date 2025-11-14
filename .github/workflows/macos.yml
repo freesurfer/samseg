@@ -216,9 +216,9 @@ jobs:
         name: macos-wheels-${{ env.PYTHON_VERSION_STR }}-${{ env._PYTHON_HOST_PLATFORM }}
         path: ${{ github.workspace }}
 
-#    - name: Upload to PyPI
-#      run: |
-#        python -m pip install twine
-#        python -m twine upload *.whl -u __token__ -p "$PASSWORD"
-#      env:
-#        PASSWORD: ${{ secrets.PYPI_TOKEN }}
+    - name: Upload to PyPI
+      run: |
+        python -m pip install twine
+        python -m twine upload *.whl -u __token__ -p "$PASSWORD"
+      env:
+        PASSWORD: ${{ secrets.PYPI_TOKEN }}
