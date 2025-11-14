@@ -89,6 +89,7 @@ jobs:
         cd ITK-build-${PYTHON_VERSION_STR}-${_PYTHON_HOST_PLATFORM}
         cmake \
             -DCMAKE_POLICY_VERSION_MINIMUM=3.5 \
+            -DITK_USE_SYSTEM_PNG=ON \
             -DBUILD_SHARED_LIBS=OFF \
             -DBUILD_TESTING=OFF \
             -DBUILD_EXAMPLES=OFF \
