@@ -89,11 +89,11 @@ jobs:
         name: linux-wheels
         path: wheelhouse/*.whl
 
-    - name: Upload to PyPI
-      if: startsWith(github.ref, 'refs/tags')
-      run: |
-        $PYTHON -m pip install twine
-        $PYTHON -m twine upload wheelhouse/*.whl -u __token__ -p "$PASSWORD"
-      env:
-        PASSWORD: ${{ secrets.PYPI_TOKEN }}
-        PYTHON: /opt/python/cp38-cp38/bin/python
+#    - name: Upload to PyPI
+#      if: startsWith(github.ref, 'refs/tags')
+#      run: |
+#        $PYTHON -m pip install twine
+#        $PYTHON -m twine upload wheelhouse/*.whl -u __token__ -p "$PASSWORD"
+#      env:
+#        PASSWORD: ${{ secrets.PYPI_TOKEN }}
+#        PYTHON: /opt/python/cp38-cp38/bin/python
