@@ -115,10 +115,10 @@ jobs:
         name: windows-wheels-${{ env.pythonVersionStr }}
         path: ${{ github.workspace }}
 
-    - name: Upload to PyPI
-      if: ${{ github.event_name == 'push' && (startsWith(github.ref, 'refs/tags') || startsWith(env.GITHUB_REF, 'refs/tags')) }}
-      run: |
-        python -m pip install twine
-        python -m twine upload *.whl -u __token__ -p "$env:PASSWORD"
-      env:
-        PASSWORD: ${{ secrets.PYPI_TOKEN }}
+#    - name: Upload to PyPI
+#      if: ${{ github.event_name == 'push' && (startsWith(github.ref, 'refs/tags') || startsWith(env.GITHUB_REF, 'refs/tags')) }}
+#      run: |
+#        python -m pip install twine
+#        python -m twine upload *.whl -u __token__ -p "$env:PASSWORD"
+#      env:
+#        PASSWORD: ${{ secrets.PYPI_TOKEN }}
