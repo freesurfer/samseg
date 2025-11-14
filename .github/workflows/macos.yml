@@ -88,6 +88,7 @@ jobs:
         mkdir ITK-build-${PYTHON_VERSION_STR}-${_PYTHON_HOST_PLATFORM}
         cd ITK-build-${PYTHON_VERSION_STR}-${_PYTHON_HOST_PLATFORM}
         cmake \
+            -DCMAKE_POLICY_VERSION_MINIMUM=3.5 \
             -DBUILD_SHARED_LIBS=OFF \
             -DBUILD_TESTING=OFF \
             -DBUILD_EXAMPLES=OFF \
