@@ -38,7 +38,10 @@ set(CMAKE_CXX_STANDARD 11)
 # --------------------------------------------------
 
 # initialize pybind for python wrapping
-add_subdirectory(${pybind11_DIR} pybind11)
+find_package(pybind11 CONFIG)
+if(NOT pybind11_FOUND)
+  add_subdirectory(${pybind11_DIR} pybind11)
+endif()
 message(STATUS "ITK_DIR=${ITK_DIR} pybind11_DIR=${pybind11_DIR}")
 
 
