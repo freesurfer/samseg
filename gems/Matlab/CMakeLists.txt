@@ -1,253 +1,74 @@
 find_package(Matlab REQUIRED)
 
-# Build the mex file containing all the real functionality
-MATLAB_ADD_MEX( NAME kvlGEMSMatlab
-                SRC kvlGEMSMatlab.cxx kvlMatlabRunnerArray.cxx kvlMatlabObjectArray.cxx
-                LINK_TO ${ITK_LIBRARIES} kvlGEMSCommon )
+matlab_add_mex(NAME kvlGEMSMatlab
+  SRC kvlGEMSMatlab.cxx kvlMatlabRunnerArray.cxx kvlMatlabObjectArray.cxx
+  LINK_TO ${ITK_LIBRARIES} kvlGEMSCommon
+)
 
+configure_file(kvlReadCompressionLookupTable.m ${GEMS_RUNTIME_PATH}/kvlReadCompressionLookupTable.m COPYONLY)
+configure_file(kvlMergeAlphas.m ${GEMS_RUNTIME_PATH}/kvlMergeAlphas.m COPYONLY)
+configure_file(showImage.m ${GEMS_RUNTIME_PATH}/showImage.m COPYONLY)
+configure_file(kvlColorCodeProbabilityImages.m ${GEMS_RUNTIME_PATH}/kvlColorCodeProbabilityImages.m COPYONLY)
+configure_file(mosaicImages.m ${GEMS_RUNTIME_PATH}/mosaicImages.m COPYONLY)
+configure_file(kvlEvaluateMeshPositionInVectorFormat.m ${GEMS_RUNTIME_PATH}/kvlEvaluateMeshPositionInVectorFormat.m COPYONLY)
+configure_file(backprojectKroneckerProductBasisFunctions.m ${GEMS_RUNTIME_PATH}/backprojectKroneckerProductBasisFunctions.m COPYONLY)
+configure_file(computePrecisionOfKroneckerProductBasisFunctions.m ${GEMS_RUNTIME_PATH}/computePrecisionOfKroneckerProductBasisFunctions.m COPYONLY)
+configure_file(projectKroneckerProductBasisFunctions.m ${GEMS_RUNTIME_PATH}/projectKroneckerProductBasisFunctions.m COPYONLY)
+configure_file(kvlReadSharedGMMParameters.m ${GEMS_RUNTIME_PATH}/kvlReadSharedGMMParameters.m COPYONLY)
+configure_file(kvlReadCompressionLookupTable.m ${GEMS_RUNTIME_PATH}/kvlReadCompressionLookupTable.m COPYONLY)
+configure_file(kvlWriteCompressionLookupTable.m ${GEMS_RUNTIME_PATH}/kvlWriteCompressionLookupTable.m COPYONLY)
+configure_file(kvlWriteSharedGMMParameters.m ${GEMS_RUNTIME_PATH}/kvlWriteSharedGMMParameters.m COPYONLY)
+configure_file(kvlWarpMesh.m ${GEMS_RUNTIME_PATH}/kvlWarpMesh.m COPYONLY)
+configure_file(kvlFitRestrictedGMM.m ${GEMS_RUNTIME_PATH}/kvlFitRestrictedGMM.m COPYONLY)
 
-# Copy some scripts
-CONFIGURE_FILE( kvlReadCompressionLookupTable.m
-  ${GEMS_RUNTIME_PATH}/kvlReadCompressionLookupTable.m COPYONLY )
-CONFIGURE_FILE( kvlMergeAlphas.m
-  ${GEMS_RUNTIME_PATH}/kvlMergeAlphas.m COPYONLY )
-CONFIGURE_FILE( showImage.m
-  ${GEMS_RUNTIME_PATH}/showImage.m COPYONLY )
-CONFIGURE_FILE( kvlColorCodeProbabilityImages.m
-  ${GEMS_RUNTIME_PATH}/kvlColorCodeProbabilityImages.m COPYONLY )
-CONFIGURE_FILE( mosaicImages.m
-  ${GEMS_RUNTIME_PATH}/mosaicImages.m COPYONLY )
-CONFIGURE_FILE( kvlEvaluateMeshPositionInVectorFormat.m
-  ${GEMS_RUNTIME_PATH}/kvlEvaluateMeshPositionInVectorFormat.m COPYONLY )
-CONFIGURE_FILE( backprojectKroneckerProductBasisFunctions.m
-  ${GEMS_RUNTIME_PATH}/backprojectKroneckerProductBasisFunctions.m COPYONLY )
-CONFIGURE_FILE( computePrecisionOfKroneckerProductBasisFunctions.m
-  ${GEMS_RUNTIME_PATH}/computePrecisionOfKroneckerProductBasisFunctions.m COPYONLY )
-CONFIGURE_FILE( projectKroneckerProductBasisFunctions.m
-  ${GEMS_RUNTIME_PATH}/projectKroneckerProductBasisFunctions.m COPYONLY )
-CONFIGURE_FILE( kvlReadSharedGMMParameters.m
-  ${GEMS_RUNTIME_PATH}/kvlReadSharedGMMParameters.m COPYONLY )
-CONFIGURE_FILE( kvlReadCompressionLookupTable.m
-  ${GEMS_RUNTIME_PATH}/kvlReadCompressionLookupTable.m COPYONLY )
-CONFIGURE_FILE( kvlWriteCompressionLookupTable.m
-  ${GEMS_RUNTIME_PATH}/kvlWriteCompressionLookupTable.m COPYONLY )
-CONFIGURE_FILE( kvlWriteSharedGMMParameters.m
-  ${GEMS_RUNTIME_PATH}/kvlWriteSharedGMMParameters.m COPYONLY )
-CONFIGURE_FILE( kvlWarpMesh.m
-  ${GEMS_RUNTIME_PATH}/kvlWarpMesh.m COPYONLY )
-CONFIGURE_FILE( kvlFitRestrictedGMM.m
-  ${GEMS_RUNTIME_PATH}/kvlFitRestrictedGMM.m COPYONLY )
+set(RUNNERS
+  GetImageBuffer:1
+  SetImageBuffer:0
+  ReadCroppedImage:4
+  ReadMeshCollection:1
+  GetMesh:1
+  RasterizeAtlasMesh:1
+  SmoothImageBuffer:1
+  GetAlphasInMeshNodes:1
+  SetAlphasInMeshNodes:0
+  SmoothMeshCollection:1
+  ScaleMeshCollection:0
+  BiasFieldCorrectImage:1
+  WriteImage:0
+  CreateImage:1
+  DeformMesh:1
+  GetLevenbergMarquardtOptimizer:1
+  Clear:0
+  SetMaximumNumberOfThreads:0
+  ScaleMesh:0
+  SmoothMesh:0
+  ReadImage:2
+  GetTransformMatrix:1
+  GetMeshNodePositions:1
+  SetMeshCollectionPositions:0
+  WriteMeshCollection:0
+  TransformMeshCollection:0
+  SetKOfMeshCollection:0
+  CreateTransform:1
+  EvaluateMeshPosition:2
+  EvaluateMeshPositionWithEntropy:2
+  SetMeshNodePositions:0
+  ChangeK:0
+  GetImageFromOptimizer:1
+  CreateRGBImage:1
+  WriteRGBImage:0
+  GetCroppedRegion:4
+  GetCostAndGradientCalculator:1
+  GetAverageAtlasMeshPositionCostAndGradientCalculator:1
+  GetOptimizer:1
+  StepOptimizer:2
+  CreateMeshCollection:1
+  DrawJacobianDeterminant:1
+)
 
-
-# For each function, also create a .m file calling the mex file
-# with the correct arguments. 
-SET( runnerName "GetImageBuffer" )
-SET( runnerNumberOfOutputs "1" )
-CONFIGURE_FILE( kvlRunnerWrapperTemplate.m
-  ${GEMS_RUNTIME_PATH}/kvl${runnerName}.m )
-
-SET( runnerName "SetImageBuffer" )
-SET( runnerNumberOfOutputs "0" )
-CONFIGURE_FILE( kvlRunnerWrapperTemplate.m
-  ${GEMS_RUNTIME_PATH}/kvl${runnerName}.m )
-
-SET( runnerName "ReadCroppedImage" )
-SET( runnerNumberOfOutputs "4" )
-CONFIGURE_FILE( kvlRunnerWrapperTemplate.m
-  ${GEMS_RUNTIME_PATH}/kvl${runnerName}.m )
-
-SET( runnerName "ReadMeshCollection" )
-SET( runnerNumberOfOutputs "1" )
-CONFIGURE_FILE( kvlRunnerWrapperTemplate.m
-  ${GEMS_RUNTIME_PATH}/kvl${runnerName}.m )
-
-SET( runnerName "GetMesh" )
-SET( runnerNumberOfOutputs "1" )
-CONFIGURE_FILE( kvlRunnerWrapperTemplate.m
-  ${GEMS_RUNTIME_PATH}/kvl${runnerName}.m )
-
-SET( runnerName "RasterizeAtlasMesh" )
-SET( runnerNumberOfOutputs "1" )
-CONFIGURE_FILE( kvlRunnerWrapperTemplate.m
-  ${GEMS_RUNTIME_PATH}/kvl${runnerName}.m )
-
-SET( runnerName "SmoothImageBuffer" )
-SET( runnerNumberOfOutputs "1" )
-CONFIGURE_FILE( kvlRunnerWrapperTemplate.m
-  ${GEMS_RUNTIME_PATH}/kvl${runnerName}.m )
-
-SET( runnerName "GetAlphasInMeshNodes" )
-SET( runnerNumberOfOutputs "1" )
-CONFIGURE_FILE( kvlRunnerWrapperTemplate.m
-  ${GEMS_RUNTIME_PATH}/kvl${runnerName}.m )
-
-SET( runnerName "SetAlphasInMeshNodes" )
-SET( runnerNumberOfOutputs "0" )
-CONFIGURE_FILE( kvlRunnerWrapperTemplate.m
-  ${GEMS_RUNTIME_PATH}/kvl${runnerName}.m )
-
-SET( runnerName "SmoothMeshCollection" )
-SET( runnerNumberOfOutputs "1" )
-CONFIGURE_FILE( kvlRunnerWrapperTemplate.m
-  ${GEMS_RUNTIME_PATH}/kvl${runnerName}.m )
-
-SET( runnerName "ScaleMeshCollection" )
-SET( runnerNumberOfOutputs "0" )
-CONFIGURE_FILE( kvlRunnerWrapperTemplate.m
-  ${GEMS_RUNTIME_PATH}/kvl${runnerName}.m )
-
-SET( runnerName "BiasFieldCorrectImage" )
-SET( runnerNumberOfOutputs "1" )
-CONFIGURE_FILE( kvlRunnerWrapperTemplate.m
-  ${GEMS_RUNTIME_PATH}/kvl${runnerName}.m )
-
-SET( runnerName "WriteImage" )
-SET( runnerNumberOfOutputs "0" )
-CONFIGURE_FILE( kvlRunnerWrapperTemplate.m
-  ${GEMS_RUNTIME_PATH}/kvl${runnerName}.m )
-
-SET( runnerName "CreateImage" )
-SET( runnerNumberOfOutputs "1" )
-CONFIGURE_FILE( kvlRunnerWrapperTemplate.m
-  ${GEMS_RUNTIME_PATH}/kvl${runnerName}.m )
-
-SET( runnerName "DeformMesh" )
-SET( runnerNumberOfOutputs "1" )
-CONFIGURE_FILE( kvlRunnerWrapperTemplate.m
-  ${GEMS_RUNTIME_PATH}/kvl${runnerName}.m )
-
-SET( runnerName "GetLevenbergMarquardtOptimizer" )
-SET( runnerNumberOfOutputs "1" )
-CONFIGURE_FILE( kvlRunnerWrapperTemplate.m
-  ${GEMS_RUNTIME_PATH}/kvl${runnerName}.m )
-
-SET( runnerName "Clear" )
-SET( runnerNumberOfOutputs "0" )
-CONFIGURE_FILE( kvlRunnerWrapperTemplate.m
-  ${GEMS_RUNTIME_PATH}/kvl${runnerName}.m )
-
-SET( runnerName "SetMaximumNumberOfThreads" )
-SET( runnerNumberOfOutputs "0" )
-CONFIGURE_FILE( kvlRunnerWrapperTemplate.m
-  ${GEMS_RUNTIME_PATH}/kvl${runnerName}.m )
-
-SET( runnerName "ScaleMesh" )
-SET( runnerNumberOfOutputs "0" )
-CONFIGURE_FILE( kvlRunnerWrapperTemplate.m
-  ${GEMS_RUNTIME_PATH}/kvl${runnerName}.m )
-
-SET( runnerName "SmoothMesh" )
-SET( runnerNumberOfOutputs "0" )
-CONFIGURE_FILE( kvlRunnerWrapperTemplate.m
-  ${GEMS_RUNTIME_PATH}/kvl${runnerName}.m )
-
-SET( runnerName "ReadImage" )
-SET( runnerNumberOfOutputs "2" )
-CONFIGURE_FILE( kvlRunnerWrapperTemplate.m
-  ${GEMS_RUNTIME_PATH}/kvl${runnerName}.m )
-
-SET( runnerName "GetTransformMatrix" )
-SET( runnerNumberOfOutputs "1" )
-CONFIGURE_FILE( kvlRunnerWrapperTemplate.m
-  ${GEMS_RUNTIME_PATH}/kvl${runnerName}.m )
-
-SET( runnerName "GetMeshNodePositions" )
-SET( runnerNumberOfOutputs "1" )
-CONFIGURE_FILE( kvlRunnerWrapperTemplate.m
-  ${GEMS_RUNTIME_PATH}/kvl${runnerName}.m )
-
-SET( runnerName "SetMeshCollectionPositions" )
-SET( runnerNumberOfOutputs "0" )
-CONFIGURE_FILE( kvlRunnerWrapperTemplate.m
-  ${GEMS_RUNTIME_PATH}/kvl${runnerName}.m )
-
-SET( runnerName "WriteMeshCollection" )
-SET( runnerNumberOfOutputs "0" )
-CONFIGURE_FILE( kvlRunnerWrapperTemplate.m
-  ${GEMS_RUNTIME_PATH}/kvl${runnerName}.m )
-
-SET( runnerName "TransformMeshCollection" )
-SET( runnerNumberOfOutputs "0" )
-CONFIGURE_FILE( kvlRunnerWrapperTemplate.m
-  ${GEMS_RUNTIME_PATH}/kvl${runnerName}.m )
-
-SET( runnerName "SetKOfMeshCollection" )
-SET( runnerNumberOfOutputs "0" )
-CONFIGURE_FILE( kvlRunnerWrapperTemplate.m
-  ${GEMS_RUNTIME_PATH}/kvl${runnerName}.m )
-
-SET( runnerName "CreateTransform" )
-SET( runnerNumberOfOutputs "1" )
-CONFIGURE_FILE( kvlRunnerWrapperTemplate.m
-  ${GEMS_RUNTIME_PATH}/kvl${runnerName}.m )
-
-SET( runnerName "EvaluateMeshPosition" )
-SET( runnerNumberOfOutputs "2" )
-CONFIGURE_FILE( kvlRunnerWrapperTemplate.m
-  ${GEMS_RUNTIME_PATH}/kvl${runnerName}.m )
-
-SET( runnerName "EvaluateMeshPositionWithEntropy" )
-SET( runnerNumberOfOutputs "2" )
-CONFIGURE_FILE( kvlRunnerWrapperTemplate.m
-  ${GEMS_RUNTIME_PATH}/kvl${runnerName}.m )
-
-SET( runnerName "SetMeshNodePositions" )
-SET( runnerNumberOfOutputs "0" )
-CONFIGURE_FILE( kvlRunnerWrapperTemplate.m
-  ${GEMS_RUNTIME_PATH}/kvl${runnerName}.m )
-
-SET( runnerName "ChangeK" )
-SET( runnerNumberOfOutputs "0" )
-CONFIGURE_FILE( kvlRunnerWrapperTemplate.m 
-  ${GEMS_RUNTIME_PATH}/kvl${runnerName}.m )
-
-SET( runnerName "GetImageFromOptimizer" )
-SET( runnerNumberOfOutputs "1" )
-CONFIGURE_FILE( kvlRunnerWrapperTemplate.m 
-  ${GEMS_RUNTIME_PATH}/kvl${runnerName}.m )
-
-SET( runnerName "CreateRGBImage" )
-SET( runnerNumberOfOutputs "1" )
-CONFIGURE_FILE( kvlRunnerWrapperTemplate.m 
-  ${GEMS_RUNTIME_PATH}/kvl${runnerName}.m )
-
-SET( runnerName "WriteRGBImage" )
-SET( runnerNumberOfOutputs "0" )
-CONFIGURE_FILE( kvlRunnerWrapperTemplate.m 
-  ${GEMS_RUNTIME_PATH}/kvl${runnerName}.m )
-
-SET( runnerName "GetCroppedRegion" )
-SET( runnerNumberOfOutputs "4" )
-CONFIGURE_FILE( kvlRunnerWrapperTemplate.m
-  ${GEMS_RUNTIME_PATH}/kvl${runnerName}.m )
-
-SET( runnerName "GetCostAndGradientCalculator" )
-SET( runnerNumberOfOutputs "1" )
-CONFIGURE_FILE( kvlRunnerWrapperTemplate.m
-  ${GEMS_RUNTIME_PATH}/kvl${runnerName}.m )
-
-SET( runnerName "GetAverageAtlasMeshPositionCostAndGradientCalculator" )
-SET( runnerNumberOfOutputs "1" )
-CONFIGURE_FILE( kvlRunnerWrapperTemplate.m
-  ${GEMS_RUNTIME_PATH}/kvl${runnerName}.m )
-
-SET( runnerName "GetOptimizer" )
-SET( runnerNumberOfOutputs "1" )
-CONFIGURE_FILE( kvlRunnerWrapperTemplate.m
-  ${GEMS_RUNTIME_PATH}/kvl${runnerName}.m )
-
-SET( runnerName "StepOptimizer" )
-SET( runnerNumberOfOutputs "2" )
-CONFIGURE_FILE( kvlRunnerWrapperTemplate.m
-  ${GEMS_RUNTIME_PATH}/kvl${runnerName}.m )
-
-SET( runnerName "CreateMeshCollection" )
-SET( runnerNumberOfOutputs "1" )
-CONFIGURE_FILE( kvlRunnerWrapperTemplate.m
-  ${GEMS_RUNTIME_PATH}/kvl${runnerName}.m )
-
-SET( runnerName "DrawJacobianDeterminant" )
-SET( runnerNumberOfOutputs "1" )
-CONFIGURE_FILE( kvlRunnerWrapperTemplate.m
-  ${GEMS_RUNTIME_PATH}/kvl${runnerName}.m )
-  
+foreach(runner IN LISTS RUNNERS)
+  string(REGEX MATCH "^([^:]+):([0-9]+)$" _ "${runner}")
+  set(runnerName "${CMAKE_MATCH_1}")
+  set(runnerNumberOfOutputs "${CMAKE_MATCH_2}")
+  configure_file(kvlRunnerWrapperTemplate.m ${GEMS_RUNTIME_PATH}/kvl${runnerName}.m)
+endforeach()

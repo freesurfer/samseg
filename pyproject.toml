@@ -1,3 +1,54 @@
 [build-system]
-requires = ["setuptools>=67", "wheel", "build", "versioneer"]
-build-backend = "setuptools.build_meta"
+requires = ["scikit-build-core>=0.10", "pybind11"]
+build-backend = "scikit_build_core.build"
+
+[project]
+name = "samseg"
+dynamic = ["version"]
+description = "Sequence-Adaptive Multimodal SEGmentation (SAMSEG)"
+readme = "README.md"
+license = {text = "MIT"}
+requires-python = ">=3.9"
+authors = [
+    {name = "Koen Van Leemput"},
+    {name = "Oula Puonti"},
+    {name = "Juan Eugenio Iglesias"},
+    {name = "Stefano Cerri"},
+]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+]
+dependencies = [
+    "surfa @ git+https://github.com/freesurfer/surfa.git@c6cddec65f3f3455c60e7954e630ef94368611ec",
+    "scikit-learn",
+    "numpy",
+    "numba",
+]
+
+[tool.scikit-build]
+wheel.exclude = ["samseg/gems/_cxx"]
+
+[project.optional-dependencies]
+test = ["pytest", "tensorflow"]
+
+[project.scripts]
+run_samseg = "samseg.cli.run_samseg:main"
+computeTissueConcentrations = "samseg.cli.computeTissueConcentrations:main"
+prepareAtlasDirectory = "samseg.cli.prepareAtlasDirectory:main"
+run_samseg_long = "samseg.cli.run_samseg_long:main"
+segment_subregions = "samseg.cli.segment_subregions:main"
+sbtiv = "samseg.cli.sbtiv:main"
+gems_compute_atlas_probs = "samseg.cli.gems_compute_atlas_probs:main"
+merge_add_mesh_alphas = "samseg.cli.merge_add_mesh_alphas:main"
+
+[project.urls]
+Homepage = "https://github.com/freesurfer/samseg"
+
+[tool.scikit-build.metadata.version]
+provider = "scikit_build_core.metadata.regex"
+input = "samseg/__init__.py"
+
+[tool.scikit-build.cmake.define]
+GEMS_BUILD_CUDA = {env = "GEMS_BUILD_CUDA", default = "OFF"}
