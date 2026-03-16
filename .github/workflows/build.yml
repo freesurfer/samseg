@@ -1,0 +1,94 @@
+name: Build wheels
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build_wheels:
+    name: Build wheels on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            cibw-archs: x86_64
+          - os: windows-latest
+            cibw-archs: AMD64
+          - os: macos-15
+            cibw-archs: arm64
+            deployment-target: '14.0'
+          - os: macos-15-intel
+            cibw-archs: x86_64
+            deployment-target: '13.0'
+
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Cache ITK build
+        uses: actions/cache@v4
+        with:
+          path: ${{ github.workspace }}/itk-build
+          key: itk-5.4.5-${{ matrix.os }}
+          restore-keys: |
+            itk-5.4.5-${{ matrix.os }}
+
+      - name: Build ITK (macOS)
+        if: runner.os == 'macOS'
+        run: |
+          git clone --depth 1 --branch v5.4.5 https://github.com/InsightSoftwareConsortium/ITK.git /tmp/ITK
+          if [ ! -f ${{ github.workspace }}/itk-build/ITKConfig.cmake ]; then
+            cmake -S /tmp/ITK -B ${{ github.workspace }}/itk-build -DBUILD_TESTING=OFF -DBUILD_EXAMPLES=OFF -DBUILD_SHARED_LIBS=OFF
+            cmake --build ${{ github.workspace }}/itk-build --parallel $(sysctl -n hw.ncpu)
+          fi
+
+      - name: Build ITK (Windows)
+        if: runner.os == 'Windows'
+        shell: cmd
+        run: |
+          git clone --depth 1 --branch v5.4.5 https://github.com/InsightSoftwareConsortium/ITK.git C:\ITK_src
+          if not exist "${{ github.workspace }}\itk-build\ITKConfig.cmake" (
+            cmake -S C:\ITK_src -B "${{ github.workspace }}\itk-build" -DBUILD_TESTING=OFF -DBUILD_EXAMPLES=OFF -DBUILD_SHARED_LIBS=OFF -G "Visual Studio 17 2022" -A x64
+            cmake --build "${{ github.workspace }}\itk-build" --config Release --parallel
+          )
+
+      - name: Build wheels
+        uses: pypa/cibuildwheel@v3.4.0
+        env:
+          CIBW_BUILD: cp313-*
+          CIBW_SKIP: '*-win32 *-manylinux_i686 *-musllinux*'
+          CIBW_ARCHS: ${{ matrix.cibw-archs }}
+          CIBW_MANYLINUX_X86_64_IMAGE: manylinux_2_28
+          CIBW_CONTAINER_ENGINE: "docker; create_args: --volume ${{ github.workspace }}/itk-build:/itk-build"
+          CIBW_BEFORE_ALL_LINUX: |
+            git clone --depth 1 --branch v5.4.5 https://github.com/InsightSoftwareConsortium/ITK.git /tmp/ITK
+            if [ ! -f /itk-build/ITKConfig.cmake ]; then
+              cmake -S /tmp/ITK -B /itk-build -DBUILD_TESTING=OFF -DBUILD_EXAMPLES=OFF -DBUILD_SHARED_LIBS=OFF
+              cmake --build /itk-build --parallel $(nproc)
+            fi
+          CIBW_ENVIRONMENT_LINUX: ITK_DIR=/itk-build
+          CIBW_ENVIRONMENT_MACOS: ITK_DIR=${{ github.workspace }}/itk-build MACOSX_DEPLOYMENT_TARGET=${{ matrix.deployment-target }}
+          CIBW_ENVIRONMENT_WINDOWS: ITK_DIR=${{ github.workspace }}\itk-build SKBUILD_BUILD_DIR=D:\\b
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: wheels-${{ matrix.os }}
+          path: ./wheelhouse/*.whl
+
+  publish:
+    name: Publish wheels to PyPI
+    needs: build_wheels
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/')
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: dist
+          pattern: wheels-*
+          merge-multiple: true
+
+      - uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          password: ${{ secrets.PYPI_TOKEN }}
