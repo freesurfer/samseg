@@ -39,17 +39,17 @@ public :
     }
 
   /** */  
-  void Rasterize( const AtlasMesh* mesh );
-  
-  
+  void Rasterize( const AtlasMesh* mesh ) override;
+
+
 protected:
   AtlasMeshStatisticsCollector();
   virtual ~AtlasMeshStatisticsCollector();
-  
+
   //
-  bool RasterizeTetrahedron( const AtlasMesh* mesh, 
+  bool RasterizeTetrahedron( const AtlasMesh* mesh,
                              AtlasMesh::CellIdentifier tetrahedronId,
-                             int threadNumber );
+                             int threadNumber ) override;
 
   virtual void GetContributionOfTetrahedron( const AtlasMesh::PointType& p0,
                                              const AtlasMesh::PointType& p1,

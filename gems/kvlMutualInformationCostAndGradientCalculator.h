@@ -52,13 +52,13 @@ public :
   void SetImage( const ImageType* image );
 
   /** */  
-  void Rasterize( const AtlasMesh* mesh );
-  
-  
+  void Rasterize( const AtlasMesh* mesh ) override;
+
+
 protected:
   MutualInformationCostAndGradientCalculator();
   virtual ~MutualInformationCostAndGradientCalculator();
-  
+
   void AddDataContributionOfTetrahedron( const AtlasMesh::PointType& p0,
                                          const AtlasMesh::PointType& p1,
                                          const AtlasMesh::PointType& p2,
@@ -71,8 +71,8 @@ protected:
                                          AtlasPositionGradientThreadAccumType&  gradientInVertex0,
                                          AtlasPositionGradientThreadAccumType&  gradientInVertex1,
                                          AtlasPositionGradientThreadAccumType&  gradientInVertex2,
-                                         AtlasPositionGradientThreadAccumType&  gradientInVertex3 );
-  
+                                         AtlasPositionGradientThreadAccumType&  gradientInVertex3 ) override;
+
 private:
   MutualInformationCostAndGradientCalculator(const Self&); //purposely not implemented
   void operator=(const Self&); //purposely not implemented

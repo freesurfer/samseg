@@ -608,16 +608,7 @@ namespace itk
       case SHORT: returnValue = sizeof(short); break;
       case INT:   returnValue = sizeof(int); break;
       case FLOAT: returnValue = sizeof(float); break;
-      
-      // DJ -- added this in to get the compiler to shut up
-      case UNKNOWNCOMPONENTTYPE:
-      case CHAR:
-      case USHORT:
-      case UINT:
-      case ULONG:
-      case LONG:
-      case DOUBLE:
-        break;
+      default: break;
       }
     return returnValue;
   }

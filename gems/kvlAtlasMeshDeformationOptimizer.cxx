@@ -1,5 +1,6 @@
 #include "kvlAtlasMeshDeformationOptimizer.h"
 
+#include <cmath>
 
 namespace kvl
 {
@@ -430,7 +431,7 @@ AtlasMeshDeformationOptimizer
       break;
       }
 
-    if ( fabsf( directionalDerivative ) <= ( -c2 * initialDirectionalDerivative ) )
+    if ( std::abs( directionalDerivative ) <= ( -c2 * initialDirectionalDerivative ) )
       {
       // Found an excellent solution that we can simply return -- no need for zooming
       newPosition = position;
@@ -772,7 +773,7 @@ AtlasMeshDeformationOptimizer
 
     
     // Check size
-    if ( ( fabsf( highAlpha - lowAlpha ) * maximalDeformationOfSearchDirection )
+    if ( ( std::abs( highAlpha - lowAlpha ) * maximalDeformationOfSearchDirection )
          < m_LineSearchMaximalDeformationIntervalStopCriterion )
       {
       //std::cout << "!!!!!!!!!!!!!!!" << startPosition->Begin().Value() << std::endl;

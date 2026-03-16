@@ -35,10 +35,10 @@ protected :
   virtual ~AtlasMeshCollectionValidator();
   
   // Print
-  void PrintSelf( std::ostream& os, itk::Indent indent ) const;
+  void PrintSelf( std::ostream& os, itk::Indent indent ) const override;
 
 
-    
+
 private :
   AtlasMeshCollectionValidator(const Self&); //purposely not implemented
   void operator=(const Self&); //purposely not implemented

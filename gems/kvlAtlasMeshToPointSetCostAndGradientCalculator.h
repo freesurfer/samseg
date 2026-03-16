@@ -36,8 +36,8 @@ protected:
   virtual ~AtlasMeshToPointSetCostAndGradientCalculator();
   
   //
-  void PostProcessCostAndGradient( const AtlasMesh* mesh );
-  
+  void PostProcessCostAndGradient( const AtlasMesh* mesh ) override;
+
 private:
   AtlasMeshToPointSetCostAndGradientCalculator(const Self&); //purposely not implemented
   void operator=(const Self&); //purposely not implemented

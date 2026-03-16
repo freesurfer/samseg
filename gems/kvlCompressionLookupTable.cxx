@@ -68,7 +68,6 @@ CompressionLookupTable
     std::cout << "Reading collapsedLabelFile: " << collapsedLabelFile << std::endl;
 
     std::string line;
-    unsigned short comp, lab;
     while ( std::getline( clfs, line ) )
       {
       std::ostringstream  inputParserStream;

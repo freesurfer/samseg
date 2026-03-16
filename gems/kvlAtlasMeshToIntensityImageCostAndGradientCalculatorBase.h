@@ -41,7 +41,7 @@ public:
     void SetDiffusionImages( const std::vector< ImageType::ConstPointer >& images );
 
     /** */
-    void Rasterize( const AtlasMesh* mesh );
+    void Rasterize( const AtlasMesh* mesh ) override;
 
 protected:
     AtlasMeshToIntensityImageCostAndGradientCalculatorBase();

@@ -44,9 +44,7 @@ TetrahedronInteriorConstIterator< TPixel >
   typedef typename ImageType::RegionType   RegionType;
   typedef typename RegionType::IndexType  IndexType;
   typedef typename IndexType::IndexValueType  IndexValueType;
-  typedef typename RegionType::SizeType  SizeType;
-  typedef typename SizeType::SizeValueType  SizeValueType;
-  
+
   // Compute the coordinates of the lower corner of the bounding box around the tetradron
   PointType  lowerCorner = p0;
   for ( int i = 0; i < 3; i++ )

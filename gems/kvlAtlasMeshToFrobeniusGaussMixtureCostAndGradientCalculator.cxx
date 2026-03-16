@@ -169,7 +169,7 @@ AtlasMeshToFrobeniusGaussMixtureCostAndGradientCalculator
   for ( ; !gmm_it.IsAtEnd(); ++gmm_it)
     {
     // Skip voxels for which nothing is known
-    if ( gmm_it.Value().Size() == 0 | fmm_it.Value().Size() == 0)
+    if ( gmm_it.Value().Size() == 0 || fmm_it.Value().Size() == 0)
       {
       //std::cout << "Skipping: " << it.Value().Size() << std::endl;
         ++fmm_it;
@@ -227,9 +227,9 @@ AtlasMeshToFrobeniusGaussMixtureCostAndGradientCalculator
           zGradientBasis += weightNextSlice*exp(mixturelog-maxExponent);
       }
 
-      if (weightInterpolated!=fmm_it.GetExtraLoadingInterpolatedValue( classNumber ) |
-              weightNextRow!=fmm_it.GetExtraLoadingNextRowAddition( classNumber )|
-              weightNextColumn!=fmm_it.GetExtraLoadingNextColumnAddition( classNumber )|
+      if (weightInterpolated!=fmm_it.GetExtraLoadingInterpolatedValue( classNumber ) ||
+              weightNextRow!=fmm_it.GetExtraLoadingNextRowAddition( classNumber )||
+              weightNextColumn!=fmm_it.GetExtraLoadingNextColumnAddition( classNumber )||
               weightNextSlice!=fmm_it.GetExtraLoadingNextSliceAddition( classNumber ) )
       {
           std::cout<<"classNumber= "<<classNumber<<std::endl;

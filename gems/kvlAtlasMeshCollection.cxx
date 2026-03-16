@@ -2014,7 +2014,6 @@ AtlasMeshCollection
         const AtlasMesh::CellType*  cell = m_Cells->ElementAt( *neighborIt );
 
         // Create a new cell of the correct type
-        typedef itk::VertexCell< AtlasMesh::CellType >    VertexCell;
         typedef itk::LineCell< AtlasMesh::CellType >      LineCell;
         typedef itk::TriangleCell< AtlasMesh::CellType >  TriangleCell;
         typedef itk::TetrahedronCell< AtlasMesh::CellType >  TetrahedronCell;

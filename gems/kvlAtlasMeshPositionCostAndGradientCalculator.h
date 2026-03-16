@@ -73,8 +73,8 @@ public :
     }
 
   /** */  
-  void Rasterize( const AtlasMesh* mesh );
-  
+  void Rasterize( const AtlasMesh* mesh ) override;
+
   /**  Boundary conditions applied to gradient */
   enum BoundaryConditionType { NONE, SLIDING, AFFINE, TRANSLATION };
   void  SetBoundaryCondition( const BoundaryConditionType&  boundaryCondition )
@@ -127,10 +127,10 @@ protected:
   virtual ~AtlasMeshPositionCostAndGradientCalculator();
   
   //
-  bool RasterizeTetrahedron( const AtlasMesh* mesh, 
+  bool RasterizeTetrahedron( const AtlasMesh* mesh,
                              AtlasMesh::CellIdentifier tetrahedronId,
-                             int threadNumber );
-  
+                             int threadNumber ) override;
+
   virtual void AddDataContributionOfTetrahedron( const AtlasMesh::PointType& p0,
                                                  const AtlasMesh::PointType& p1,
                                                  const AtlasMesh::PointType& p2,

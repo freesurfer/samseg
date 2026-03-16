@@ -197,15 +197,13 @@ AtlasMeshSmoother
     //
     
     // Get unnormalized counts
-    double  cost = 0.0;
     m_MeshCollection->FlattenAlphas(); // Initialization to flat alphas
     for ( int iterationNumber = 0; iterationNumber < 10; iterationNumber++ )
       {
-      AtlasMeshProbabilityImageStatisticsCollector::Pointer  statisticsCollector = 
+      AtlasMeshProbabilityImageStatisticsCollector::Pointer  statisticsCollector =
                                               AtlasMeshProbabilityImageStatisticsCollector::New();
       statisticsCollector->SetProbabilityImage( smoothedAlphasImage );
       statisticsCollector->Rasterize( m_MeshCollection->GetReferenceMesh() );
-      cost = statisticsCollector->GetMinLogLikelihood();
       //std::cout << "   EM iteration " << iterationNumber << " -> " << cost << std::endl;
       
       

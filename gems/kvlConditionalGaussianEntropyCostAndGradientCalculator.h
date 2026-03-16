@@ -139,18 +139,18 @@ public :
   void SetImage( const ImageType* image );
 
   /** */  
-  void Rasterize( const AtlasMesh* mesh );
-  
-  
+  void Rasterize( const AtlasMesh* mesh ) override;
+
+
 protected:
   ConditionalGaussianEntropyCostAndGradientCalculator();
   virtual ~ConditionalGaussianEntropyCostAndGradientCalculator();
 
   //
-  bool RasterizeTetrahedron( const AtlasMesh* mesh, 
+  bool RasterizeTetrahedron( const AtlasMesh* mesh,
                              AtlasMesh::CellIdentifier tetrahedronId,
-                             int threadNumber );
-  
+                             int threadNumber ) override;
+
 private:
   ConditionalGaussianEntropyCostAndGradientCalculator(const Self&); //purposely not implemented
   void operator=(const Self&); //purposely not implemented
