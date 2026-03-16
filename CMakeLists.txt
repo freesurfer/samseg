@@ -105,4 +105,4 @@ message(STATUS "For HOST_OS=${HOST_OS} CMAKE_CXX_FLAGS=${CMAKE_CXX_FLAGS}")
 add_subdirectory(gems)
 
 #build python
-add_subdirectory(samseg/cxx)
+add_subdirectory(samseg/gems/_cxx)
