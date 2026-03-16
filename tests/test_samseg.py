@@ -1,88 +1,14 @@
 import numpy as np
-import pytest
 import surfa as sf
 import os
+from scipy.io import loadmat
+
 import samseg
 from samseg import SamsegLesion, SamsegLongitudinalLesion
-from scipy import ndimage
-from scipy.io import loadmat
-from .. import SAMSEGDIR
-from ..SamsegUtility import coregister
-from ..Affine import initializationOptions
-from ..Samseg import initVisualizer, Samseg
-from ..io import kvlReadSharedGMMParameters
-
-# This is a hack to test an installed wheel
-# Because the test data is not in the wheel
-# the tests would fail. If you export the
-# SAMSEG_TEST_PATH variable to point to
-# the source code directory, the test data
-# is picked up from there instead.
-try:
-    SAMSEGDIR = os.environ['SAMSEG_TEST_PATH']
-except KeyError:
-    print("No environment variable set, using standard path.")
-
-@pytest.fixture(scope='module')
-def testernie_nii():
-    fn = os.path.join(
-        SAMSEGDIR, '_internal_resources', 'testing_files', 'ernie_T1_ds5.nii.gz')
-    return fn
-
-@pytest.fixture(scope='module')
-def testmni_nii():
-    fn = os.path.join(
-        SAMSEGDIR, '_internal_resources', 'testing_files', 'MNI_test_ds5.nii.gz')
-    return fn
-
-@pytest.fixture(scope='module')
-def testtemplate_nii():
-    fn = os.path.join(
-        SAMSEGDIR, 'atlas', '20Subjects_smoothing2_down2_smoothingForAffine2', 'template.nii.gz')
-    return fn
-
-@pytest.fixture(scope='module')
-def testaffinemesh_msh():
-    fn = os.path.join(
-       SAMSEGDIR, 'atlas', '20Subjects_smoothing2_down2_smoothingForAffine2', 'atlasForAffineRegistration.txt.gz')
-    return fn
-
-@pytest.fixture(scope='module')
-def testaffine_mat():
-    fn = os.path.join(
-        SAMSEGDIR, '_internal_resources', 'testing_files', 'template_transforms.mat')
-    return fn
-
-@pytest.fixture(scope='module')
-def testcubenoise_nii():
-    fn = os.path.join(
-        SAMSEGDIR, '_internal_resources', 'testing_files', 'cube_noise.nii.gz')
-    return fn
-
-@pytest.fixture(scope='module')
-def testcubenoise_2_nii():
-    fn = os.path.join(
-        SAMSEGDIR, '_internal_resources', 'testing_files', 'cube_noise_2.nii.gz')
-    return fn
-
-@pytest.fixture(scope='module')
-def testcube_nii():
-    fn = os.path.join(
-        SAMSEGDIR, '_internal_resources', 'testing_files', 'cube.nii.gz')
-    return fn
-
-@pytest.fixture(scope='module')
-def testcubeatlas_path():
-    fn = os.path.join(
-        SAMSEGDIR, '_internal_resources', 'testing_files', 'cube_atlas')
-    return fn
-
-@pytest.fixture
-def tmppath(tmpdir):
-    return str(tmpdir)
-
-def _calc_dice(vol1, vol2):
-    return np.sum(vol2[vol1])*2.0 / (np.sum(vol1) + np.sum(vol2))
+from samseg.SamsegUtility import coregister
+from samseg.Affine import initializationOptions
+from samseg.Samseg import initVisualizer
+from samseg.io import kvlReadSharedGMMParameters
 
 
 def test_mni_affine(tmppath, testmni_nii):
@@ -202,7 +128,7 @@ def test_coregistration(tmppath, testmni_nii):
     assert (np.corrcoef(reg_scan.data.flatten(), trans_mni.data.flatten()))[0,1] > 0.99
 
 
-def test_segmentation(tmppath, testcube_nii, testcubenoise_nii, testcubeatlas_path):
+def test_segmentation(tmppath, testcube_nii, testcubenoise_nii, testcubeatlas_path, calc_dice):
 
     os.mkdir(os.path.join(tmppath, "segmentation")) 
     seg_dir = os.path.join(tmppath, "segmentation")
@@ -257,12 +183,12 @@ def test_segmentation(tmppath, testcube_nii, testcubenoise_nii, testcubeatlas_pa
     seg = os.path.join(str(seg_dir), 'seg.mgz')
     orig_cube = sf.load_volume(testcube_nii)
     est_cube = sf.load_volume(seg)
-    dice = _calc_dice(orig_cube.data==1, est_cube.data==1)
+    dice = calc_dice(orig_cube.data==1, est_cube.data==1)
     print("Dice score: " + str(dice))
     assert dice > 0.95
 
 
-def test_segmentation_lesion(tmppath, testcube_nii, testcubenoise_nii, testcubeatlas_path):
+def test_segmentation_lesion(tmppath, testcube_nii, testcubenoise_nii, testcubeatlas_path, calc_dice):
 
     os.mkdir(os.path.join(tmppath, "segmentation")) 
     seg_dir = os.path.join(tmppath, "segmentation")
@@ -325,12 +251,12 @@ def test_segmentation_lesion(tmppath, testcube_nii, testcubenoise_nii, testcubea
     seg = os.path.join(str(seg_dir), 'seg.mgz')
     orig_cube = sf.load_volume(testcube_nii)
     est_cube = sf.load_volume(seg)
-    dice = _calc_dice(orig_cube.data==1, est_cube.data==1)
+    dice = calc_dice(orig_cube.data==1, est_cube.data==1)
     print("Dice score: " + str(dice))
     assert dice > 0.95
 
 
-def test_long_segmentation(tmppath, testcube_nii, testcubenoise_nii, testcubenoise_2_nii, testcubeatlas_path):
+def test_long_segmentation(tmppath, testcube_nii, testcubenoise_nii, testcubenoise_2_nii, testcubeatlas_path, calc_dice):
 
     os.mkdir(os.path.join(tmppath, "segmentation")) 
     seg_dir = os.path.join(tmppath, "segmentation")
@@ -390,16 +316,16 @@ def test_long_segmentation(tmppath, testcube_nii, testcubenoise_nii, testcubenoi
     est_cube_tp0 = sf.load_volume(seg_tp0)
     est_cube_tp1 = sf.load_volume(seg_tp1)
 
-    dice = _calc_dice(orig_cube.data==1, est_cube_tp0.data==1)
+    dice = calc_dice(orig_cube.data==1, est_cube_tp0.data==1)
     print("Dice score tp 0: " + str(dice))
     assert dice > 0.95
 
-    dice = _calc_dice(orig_cube.data==1, est_cube_tp1.data==1)
+    dice = calc_dice(orig_cube.data==1, est_cube_tp1.data==1)
     print("Dice score tp 1: " + str(dice))
     assert dice > 0.95
 
 
-def test_long_segmentation_lesion(tmppath, testcube_nii, testcubenoise_nii, testcubenoise_2_nii, testcubeatlas_path):
+def test_long_segmentation_lesion(tmppath, testcube_nii, testcubenoise_nii, testcubenoise_2_nii, testcubeatlas_path, calc_dice):
 
     os.mkdir(os.path.join(tmppath, "segmentation")) 
     seg_dir = os.path.join(tmppath, "segmentation")
@@ -467,11 +393,10 @@ def test_long_segmentation_lesion(tmppath, testcube_nii, testcubenoise_nii, test
     est_cube_tp0 = sf.load_volume(seg_tp0)
     est_cube_tp1 = sf.load_volume(seg_tp1)
 
-    dice = _calc_dice(orig_cube.data==1, est_cube_tp0.data==1)
+    dice = calc_dice(orig_cube.data==1, est_cube_tp0.data==1)
     print("Dice score tp 0: " + str(dice))
     assert dice > 0.95
 
-    dice = _calc_dice(orig_cube.data==1, est_cube_tp1.data==1)
+    dice = calc_dice(orig_cube.data==1, est_cube_tp1.data==1)
     print("Dice score tp 1: " + str(dice))
     assert dice > 0.95
-
