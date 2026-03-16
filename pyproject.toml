@@ -25,6 +25,7 @@ dependencies = [
     "scikit-learn",
     "numpy",
     "numba",
+    "tensorflow"
 ]
 
 [tool.scikit-build]
