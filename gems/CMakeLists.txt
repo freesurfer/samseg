@@ -1,6 +1,8 @@
-if(NOT ITK_FOUND)
-  find_package(ITK 5.4.5 QUIET)
-endif()
+# ITK: try local install first, fetch from source if unavailable.
+# FIND_PACKAGE_ARGS is not used here because ITK 5.4.x requires
+# include(${ITK_USE_FILE}) for factory registration, which is only
+# set by find_package — not by FetchContent's add_subdirectory path.
+find_package(ITK 5.4.5 QUIET)
 if(NOT ITK_FOUND)
   message(STATUS "ITK not found, fetching from source (v5.4.5)...")
   FetchContent_Declare(ITK
@@ -13,15 +15,14 @@ if(NOT ITK_FOUND)
   set(BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
   FetchContent_MakeAvailable(ITK)
   set(ITK_DIR "${itk_BINARY_DIR}" CACHE PATH "" FORCE)
+  find_package(ITK REQUIRED)
 endif()
 
-# Per ITK Software Guide §2.5
-find_package(ITK REQUIRED)
+# UseITK.cmake handles factory registration and required compiler flags.
+# Still required with ITK 5.4.x which does not export namespace targets.
 include(${ITK_USE_FILE})
 
-if(NOT ZLIB_FOUND)
-  find_package(ZLIB QUIET)
-endif()
+find_package(ZLIB QUIET)
 if(NOT ZLIB_FOUND)
   # ITK exports its bundled zlib-ng as a target named "zlib"
   if(TARGET zlib)
@@ -98,17 +99,9 @@ function(configure_gems_target target)
     ${ITK_INCLUDE_DIRS}
   )
   target_link_libraries(${target}
-    PRIVATE samseg_warnings ${ZLIB_LIBRARIES}
+    PRIVATE samseg_warnings samseg_linkopt ${ZLIB_LIBRARIES}
     PUBLIC ${ITK_LIBRARIES}
   )
-
-  if(CMAKE_SYSTEM_PROCESSOR MATCHES "(x86_64|AMD64|i[3-6]86)")
-    if(MSVC)
-      target_compile_options(${target} PRIVATE /arch:SSE2)
-    else()
-      target_compile_options(${target} PRIVATE -msse2 -mfpmath=sse)
-    endif()
-  endif()
 
   if(DEFINED ENV{GEMS_DEBUG_CXXFLAG})
     message(WARNING "additional gems debug cxxflags: $ENV{GEMS_DEBUG_CXXFLAG}")
