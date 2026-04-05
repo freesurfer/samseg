@@ -21,7 +21,7 @@ classifiers = [
     "Operating System :: OS Independent",
 ]
 dependencies = [
-    "surfa @ git+https://github.com/freesurfer/surfa.git@c6cddec65f3f3455c60e7954e630ef94368611ec",
+    "surfa @ git+https://github.com/freesurfer/surfa.git@master",
     "scikit-learn",
     "numpy",
     "numba",
