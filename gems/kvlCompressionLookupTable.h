@@ -70,7 +70,7 @@ public :
     return m_LabelStringLookupTable.find( classNumber )->second;
     }
   
-  const int  GetNumberOfClasses() const
+  int  GetNumberOfClasses() const
     {
     return m_NumberOfClasses;
     }  
@@ -84,7 +84,7 @@ protected :
   virtual ~CompressionLookupTable();
   
   // Print
-  void PrintSelf( std::ostream& os, itk::Indent indent ) const;
+  void PrintSelf( std::ostream& os, itk::Indent indent ) const override;
 
   //
   void  FillInMissingNamesAndColors();

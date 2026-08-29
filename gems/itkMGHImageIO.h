@@ -66,24 +66,24 @@ namespace itk
 
     
     /**--------------- Read the data----------------- **/
-    virtual bool CanReadFile(const char* FileNameToRead);
+    bool CanReadFile(const char* FileNameToRead) override;
     /* Set the spacing and dimension information for the set file name */
-    virtual void ReadImageInformation();
+    void ReadImageInformation() override;
     /* Read the data from the disk into provided memory buffer */
-    virtual void Read(void* buffer);
-    
+    void Read(void* buffer) override;
+
     /**---------------Write the data------------------**/
-    
-    virtual bool CanWriteFile(const char* FileNameToWrite);
+
+    bool CanWriteFile(const char* FileNameToWrite) override;
     /* Set the spacing and dimension information for the set file name */
-    virtual void WriteImageInformation();
+    void WriteImageInformation() override;
     /* Write the data to the disk from the provided memory buffer */
-    virtual void Write(const void* buffer);
+    void Write(const void* buffer) override;
 
   protected:
     MGHImageIO();
     ~MGHImageIO();
-    void PrintSelf(std::ostream& os, Indent indent) const;
+    void PrintSelf(std::ostream& os, Indent indent) const override;
 
     void ReadVolumeHeader(gzFile fp);
 
@@ -102,7 +102,7 @@ namespace itk
 
     void PermuteFrameValues(const void* buffer, char* tempmemory);
 
-    unsigned int GetComponentSize() const;
+    unsigned int GetComponentSize() const override;
 
   }; // end class declaration
 
@@ -142,15 +142,7 @@ namespace itk
         writer.Write( fs::MRI_FLOAT ); break;
       case SHORT:
         writer.Write( fs::MRI_SHORT ); break;
-
-      // DJ -- added these cases to make the compiler shut up
-      case UNKNOWNCOMPONENTTYPE:
-      case CHAR:
-      case UINT:
-      case ULONG:
-      case LONG:
-        break;
-
+      default: break;
       }
 
     // dof !?! -> default value = 1

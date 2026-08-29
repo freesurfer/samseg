@@ -41,8 +41,8 @@ protected:
   AtlasMeshDeformationFixedStepGradientDescentOptimizer();
   virtual ~AtlasMeshDeformationFixedStepGradientDescentOptimizer();
   
-  double FindAndOptimizeNewSearchDirection();
-  
+  double FindAndOptimizeNewSearchDirection() override;
+
 private:
   AtlasMeshDeformationFixedStepGradientDescentOptimizer(const Self&); //purposely not implemented
   void operator=(const Self&); //purposely not implemented

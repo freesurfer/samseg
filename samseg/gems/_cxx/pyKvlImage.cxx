@@ -31,8 +31,6 @@ py::array_t<float> KvlImage::image_to_numpy(ImagePointer image) {
 }
 
 ImagePointer KvlImage::numpy_to_image(const py::array_t<float> &buffer) {
-    typedef typename ImageType::PixelType  PixelType;
-
     // Determine the size of the image to be created
     typedef typename ImageType::SizeType  SizeType;
     SizeType  imageSize;
@@ -130,7 +128,6 @@ void KvlImage::Write(std::string fileName, KvlTransform &transform) {
     ImagePointer image = m_image;
     if ( true )
     {
-        typedef kvl::CroppedImageReader::TransformType  TransformType;
         // In order not to modify the original image, we create a new one. The proper way of doing this
         // would be to only copy the header information and of course not the pixel intensities, but I'm
         // too lazy now to figure out how to do it in ITK

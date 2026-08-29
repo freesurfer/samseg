@@ -96,9 +96,6 @@ public:
     // is a registration method. Then we ask for the optimizer object
     // from the registration method.
     auto registration = static_cast<RegistrationPointer>(object);
-    auto optimizer =
-        static_cast<OptimizerPointer>(registration->GetModifiableOptimizer());
-
     unsigned int currentLevel = registration->GetCurrentLevel();
     typename RegistrationType::ShrinkFactorsPerDimensionContainerType shrinkFactors =
         registration->GetShrinkFactorsPerDimension(currentLevel);

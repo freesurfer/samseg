@@ -47,7 +47,7 @@ protected:
                                          AtlasPositionGradientThreadAccumType&  gradientInVertex0,
                                          AtlasPositionGradientThreadAccumType&  gradientInVertex1,
                                          AtlasPositionGradientThreadAccumType&  gradientInVertex2,
-                                         AtlasPositionGradientThreadAccumType&  gradientInVertex3 );
+                                         AtlasPositionGradientThreadAccumType&  gradientInVertex3 ) override;
   
 private:
   AtlasMeshToLabelImageCostAndGradientCalculator(const Self&); //purposely not implemented

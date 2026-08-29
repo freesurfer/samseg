@@ -18,8 +18,8 @@ namespace itk
     typedef SmartPointer<const Self>  ConstPointer;
 
     /** Class methods used to interface with the registered factories **/
-    virtual const char* GetITKSourceVersion(void) const;
-    virtual const char* GetDescription(void)  const;
+    const char* GetITKSourceVersion(void) const override;
+    const char* GetDescription(void) const override;
     
     /** Method for class instantiation **/
     itkFactorylessNewMacro(Self);

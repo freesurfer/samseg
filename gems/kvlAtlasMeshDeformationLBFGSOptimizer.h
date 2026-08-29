@@ -41,10 +41,10 @@ protected:
   AtlasMeshDeformationLBFGSOptimizer();
   virtual ~AtlasMeshDeformationLBFGSOptimizer();
   
-  void WipeMemory();
+  void WipeMemory() override;
 
-  double FindAndOptimizeNewSearchDirection(); 
-  
+  double FindAndOptimizeNewSearchDirection() override;
+
 private:
   AtlasMeshDeformationLBFGSOptimizer(const Self&); //purposely not implemented
   void operator=(const Self&); //purposely not implemented

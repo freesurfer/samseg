@@ -202,7 +202,6 @@ DSWbetaMMLikelihoodImageFilter< TInputImage >
   //std::cout << "Executing GMMLikelihoodImageFilter::ThreadedGenerateData()" << std::endl;
 
   //
-  const int  numberOfDSWbeta = m_Concentrations.size();
   const int  numberOfClasses = m_NumberOfDSWbetaPerClass.size();
   const int  numberOfContrasts = this->GetNumberOfIndexedInputs();
   // std::cout << "numberOfGaussians: " << numberOfGaussians << std::endl;

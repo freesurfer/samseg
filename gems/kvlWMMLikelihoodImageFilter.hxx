@@ -232,7 +232,6 @@ WMMLikelihoodImageFilter< TInputImage >
   //std::cout << "Executing GMMLikelihoodImageFilter::ThreadedGenerateData()" << std::endl;
 
   //
-  const int  numberOfWisharts = m_degreesOfFreedomExponent.size();
   const int  numberOfClasses = m_NumberOfWishartsPerClass.size();
   const int  numberOfContrasts = this->GetNumberOfIndexedInputs();
   // std::cout << "numberOfGaussians: " << numberOfGaussians << std::endl;

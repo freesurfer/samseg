@@ -52,7 +52,7 @@ protected:
   // AtlasMeshValueDrawer()  {}
   // ~AtlasMeshValueDrawer() {}
 
-  bool RasterizeTetrahedron(const AtlasMesh* mesh, AtlasMesh::CellIdentifier tetrahedronId, int threadNumber);
+  bool RasterizeTetrahedron(const AtlasMesh* mesh, AtlasMesh::CellIdentifier tetrahedronId, int threadNumber) override;
 
 private:
   AtlasMeshValueDrawer(const Self&);  // purposely not implemented

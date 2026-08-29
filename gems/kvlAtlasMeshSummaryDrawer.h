@@ -55,9 +55,9 @@ protected:
   virtual ~AtlasMeshSummaryDrawer();
   
   //
-  bool RasterizeTetrahedron( const AtlasMesh* mesh, 
+  bool RasterizeTetrahedron( const AtlasMesh* mesh,
                              AtlasMesh::CellIdentifier tetrahedronId,
-                             int threadNumber );
+                             int threadNumber ) override;
 
 private:
   AtlasMeshSummaryDrawer(const Self&); //purposely not implemented

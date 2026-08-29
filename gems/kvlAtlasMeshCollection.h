@@ -162,9 +162,9 @@ protected :
   virtual ~AtlasMeshCollection();
   
   // Print
-  void PrintSelf( std::ostream& os, itk::Indent indent ) const;  
+  void PrintSelf( std::ostream& os, itk::Indent indent ) const override;
 
-  // 
+  //
   AtlasMeshCollection::Pointer  GetEdgeSplitted( AtlasMesh::CellIdentifier  edgeId, 
                                                    AtlasMesh::CellIdentifier  newVertexId,
                                                    AtlasMesh::PointIdentifier  newPointId,

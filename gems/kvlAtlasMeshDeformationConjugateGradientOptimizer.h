@@ -29,10 +29,10 @@ protected:
   AtlasMeshDeformationConjugateGradientOptimizer();
   virtual ~AtlasMeshDeformationConjugateGradientOptimizer();
   
-  void Initialize();
+  void Initialize() override;
 
-  double FindAndOptimizeNewSearchDirection(); 
-  
+  double FindAndOptimizeNewSearchDirection() override;
+
 private:
   AtlasMeshDeformationConjugateGradientOptimizer(const Self&); //purposely not implemented
   void operator=(const Self&); //purposely not implemented

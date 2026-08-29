@@ -68,9 +68,9 @@ public:
 protected:
     WMMLikelihoodImageFilter();
 
-    virtual void BeforeThreadedGenerateData();
+    void BeforeThreadedGenerateData() override;
 
-    virtual void ThreadedGenerateData(const RegionType & outputRegionForThread, itk::ThreadIdType);
+    void ThreadedGenerateData(const RegionType & outputRegionForThread, itk::ThreadIdType) override;
 
 private:
     WMMLikelihoodImageFilter(const Self &);

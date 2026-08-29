@@ -16,5 +16,4 @@ from .SamsegLongitudinal import SamsegLongitudinal
 # from .SamsegLongitudinalLesion import SamsegLongitudinalLesion
 from .figures import initVisualizer
 
-from . import _version
-__version__ = _version.get_versions()['version']
+__version__ = "0.5a"

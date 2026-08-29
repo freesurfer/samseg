@@ -254,7 +254,6 @@ GMMLikelihoodImageFilter< TInputImage >
   //std::cout << "Executing GMMLikelihoodImageFilter::ThreadedGenerateData()" << std::endl;
   
   //
-  const int  numberOfGaussians = m_Means.size();
   const int  numberOfClasses = m_NumberOfGaussiansPerClass.size();
   const int  numberOfContrasts = this->GetNumberOfIndexedInputs();
   // std::cout << "numberOfGaussians: " << numberOfGaussians << std::endl;
