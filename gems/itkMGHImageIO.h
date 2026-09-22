@@ -154,7 +154,7 @@ namespace itk
       // JN -- compiler started to complain again
       case LONGLONG:
       case ULONGLONG:
-      case CommonEnums::IOComponent::LDOUBLE:
+      case LDOUBLE:
         break;
 
       }
