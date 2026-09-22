@@ -620,7 +620,7 @@ namespace itk
       // JN -- compiler started complaining again
       case LONGLONG:
       case ULONGLONG:
-      case itk::CommonEnums::IOComponent::LDOUBLE:
+      case LDOUBLE:
         break;
       }
     return returnValue;
