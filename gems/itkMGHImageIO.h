@@ -154,7 +154,7 @@ namespace itk
       // JN -- compiler started to complain again
       case LONGLONG:
       case ULONGLONG:
-      case LDOUBLE:
+      //case LDOUBLE:
         break;
 
       }
