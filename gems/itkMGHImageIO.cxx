@@ -617,6 +617,10 @@ namespace itk
       case ULONG:
       case LONG:
       case DOUBLE:
+      // JN -- compiler started complaining again
+      case LONGLONG:
+      case ULONGLONG:
+      //case LDOUBLE:
         break;
       }
     return returnValue;

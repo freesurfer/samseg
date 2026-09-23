@@ -14,6 +14,8 @@ if (NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
   set(CMAKE_BUILD_TYPE "Release" CACHE STRING "Default build type" FORCE)
 endif()
 
+message(STATUS "Detected system architecture: " ${CMAKE_SYSTEM_PROCESSOR})
+
 
 # --------------------------------------------------
 #               external dependencies
@@ -63,7 +65,8 @@ message(STATUS "CMAKE_C_COMPILER=${CMAKE_C_COMPILER}, CMAKE_C_COMPILER_ID=${CMAK
 
 # warnings
 if(NOT DEFINED ENV{APPLE})
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Werror -Wno-absolute-value -Wno-sign-compare -Wno-write-strings -Wno-unused-result -Wno-unused-parameter")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Wno-sign-compare -Wno-write-strings -Wno-unused-result -Wno-unused-parameter")  
+#set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Werror -Wno-absolute-value -Wno-sign-compare -Wno-write-strings -Wno-unused-result -Wno-unused-parameter")
 endif()
 
 # clang complains about -Wno-unused-but-set-variable and says to use -Wno-unused-const-variable

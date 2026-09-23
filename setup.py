@@ -31,10 +31,10 @@ class build_ext_(build_ext):
                     pass
                 else:
                     cmake_call += [f'-D{k}={path}']
-            print(' '.join(cmake_call))
             subprocess.run(cmake_call, check=True)
             # Run Make
             if sys.platform == 'win32':
+                
                 subprocess.run([
                     'cmake', '--build', tmpdir,
                     '--config', 'Release'],

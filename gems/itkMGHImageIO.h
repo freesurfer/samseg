@@ -134,10 +134,12 @@ namespace itk
         writer.Write( fs::MRI_UCHAR ); break;
       case USHORT:
         itkWarningMacro( << " Casting from USHORT to INT!!!" );
+        ITK_FALLTHROUGH;
       case INT:
         writer.Write( fs::MRI_INT ); break;
       case DOUBLE:
         itkWarningMacro( << " Casting from DOUBLE to INT!!!" );
+        ITK_FALLTHROUGH;
       case FLOAT:
         writer.Write( fs::MRI_FLOAT ); break;
       case SHORT:
@@ -149,6 +151,10 @@ namespace itk
       case UINT:
       case ULONG:
       case LONG:
+      // JN -- compiler started to complain again
+      case LONGLONG:
+      case ULONGLONG:
+      //case LDOUBLE:
         break;
 
       }

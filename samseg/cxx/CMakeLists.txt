@@ -1,7 +1,7 @@
 include_directories(${CMAKE_SOURCE_DIR}/gems ${CMAKE_CURRENT_SOURCE_DIR})
 include(${ITK_USE_FILE})
 
-if(NOT APPLE_ARM64) 
+if(NOT APPLE_ARM64 AND NOT (CMAKE_SYSTEM_PROCESSOR MATCHES "^(aarch64|arm64)$")) 
    set(CMAKE_CXX_FLAGS "-fPIC -fpermissive -msse2 -mfpmath=sse")
 endif()
 
